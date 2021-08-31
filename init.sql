@@ -1,8 +1,8 @@
 DROP TABLE IF EXISTS athlete CASCADE;
 DROP TABLE IF EXISTS coach CASCADE;
 DROP TABLE IF EXISTS relation CASCADE;
-DROP TABLE IF EXISTS training;
-DROP TABLE IF EXISTS photos;
+DROP TABLE IF EXISTS training CASCADE;
+DROP TABLE IF EXISTS photos CASCADE;
 
 -- CREATE TYPE ACTIVITY AS ENUM ('Running','Cycling','Swimming','Gym');
 CREATE TABLE photos (
@@ -36,37 +36,38 @@ CREATE TABLE IF NOT EXISTS relation
   athlete_ID INTEGER REFERENCES athlete(id)
 );
 
+
 CREATE TABLE IF NOT EXISTS training(
    id                     SERIAL  NOT NULL PRIMARY KEY
   ,activitytype           VARCHAR(15) NOT NULL
   ,date                   DATE NOT NULL
   ,time                   TIME NOT NULL
-  ,title                  VARCHAR(28) NOT NULL
-  ,distance               VARCHAR(5) NOT NULL
+  ,title                  TEXT NOT NULL
+  ,distance               NUMERIC(6,2) NOT NULL
   ,calories               INTEGER  NOT NULL
-  ,timetaken              VARCHAR(7) NOT NULL
-  ,avgHR                  VARCHAR(3) NOT NULL
-  ,maxHR                  VARCHAR(3) NOT NULL
-  ,aerobicTE              VARCHAR(3) NOT NULL
-  ,avgruncadence          VARCHAR(3) NOT NULL
-  ,maxruncadence          VARCHAR(3) NOT NULL
-  ,avgpace                VARCHAR(5) NOT NULL
-  ,bestpace               VARCHAR(4) NOT NULL
-  ,elevgain               VARCHAR(3) NOT NULL
-  ,elevloss               VARCHAR(3) NOT NULL
+  ,timetaken              NUMERIC(6,2) NOT NULL
+  ,avgHR                 NUMERIC(6,2)  NOT NULL
+  ,maxHR                  NUMERIC(6,2) NOT NULL
+  ,aerobicTE              NUMERIC(6,2) NOT NULL
+  ,avgruncadence          NUMERIC(6,2) NOT NULL
+  ,maxruncadence          NUMERIC(6,2) NOT NULL
+  ,avgpace                NUMERIC(6,2) NOT NULL
+  ,bestpace               NUMERIC(6,2) NOT NULL
+  ,elevgain               NUMERIC(6,2) NOT NULL
+  ,elevloss               NUMERIC(6,2) NOT NULL
   ,avgstridelength        NUMERIC(4,2) NOT NULL
   ,avgverticalratio       INTEGER  NOT NULL
   ,avgverticaloscillation INTEGER  NOT NULL
-  ,avgbikecadence          VARCHAR(2) NOT NULL
-  ,maxbikecadence          VARCHAR(3) NOT NULL
-  ,normalizedpower        VARCHAR(3) NOT NULL
-  ,maxavgpower            VARCHAR(3) NOT NULL
-  ,avgpower               VARCHAR(3) NOT NULL
-  ,maxpower               VARCHAR(3) NOT NULL
-  ,totalstrokes           VARCHAR(4) NOT NULL
-  ,avgSWOLF               VARCHAR(2) NOT NULL
-  ,avgstrokerate          VARCHAR(2) NOT NULL
-  ,bestlaptime            VARCHAR(7) NOT NULL
+  ,avgbikecadence          NUMERIC(6,2) NOT NULL
+  ,maxbikecadence          NUMERIC(6,2) NOT NULL
+  ,normalizedpower       NUMERIC(6,2) NOT NULL
+  ,maxavgpower            NUMERIC(6,2) NOT NULL
+  ,avgpower              NUMERIC(6,2) NOT NULL
+  ,maxpower               NUMERIC(6,2) NOT NULL
+  ,totalstrokes           NUMERIC(6,2) NOT NULL
+  ,avgSWOLF               NUMERIC(6,2) NOT NULL
+  ,avgstrokerate          NUMERIC(6,2) NOT NULL
+  ,bestlaptime           NUMERIC(6,2) NOT NULL
   ,numberoflaps           INTEGER  NOT NULL
   ,movingtime             VARCHAR(7) NOT NULL
   ,elapsedtime            VARCHAR(7) NOT NULL
