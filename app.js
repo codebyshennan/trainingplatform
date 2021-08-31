@@ -40,7 +40,7 @@ import multer from 'multer';
 
 // initialise express and define port parameters
 const app = express();
-const PORT = process.env.PORT || 3001;
+const PORT = 80;
 const SALT = process.env.SALT;
 
 // set the name of the upload directory here
