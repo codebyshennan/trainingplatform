@@ -141,17 +141,37 @@ const checkAuth = (req,res,next)=> {
     }
   }
 
+
+
+
+
+// create separate DB connection configs for production vs non-production environments.
+// ensure our server still works on our local machines.
+let pgConnectionConfigs;
+if (process.env.ENV === 'PRODUCTION') {
+  // determine how we connect to the remote Postgres server
+  pgConnectionConfigs = {
+    user: 'postgres',
+    // set DB_PASSWORD as an environment variable for security.
+    password: process.env.DB_PASSWORD,
+    host: 'localhost',
+    database: 'trainingpeaks',
+    port: 5432,
+  };
+} else {
+  // determine how we connect to the local Postgres server
+  pgConnectionConfigs = {
+    user: 'wonggshennan',
+    host: 'localhost',
+    database: 'trainingpeaks',
+    port: 5432,
+  };
+}
+
 // postgres middleware
 const {Pool} = pg;
-const pool = new Pool({
-  user: 'wonggshennan',
-  host: 'localhost',
-  database: 'trainingpeaks',
-  port: 5432, // Postgres server always runs on this port
-});
+const pool = new Pool(pgConnectionConfigs);
 pool.connect();
-
-
 // base route to homepage
 app.get('/', (req,res)=> {
   res.render('home'); 
@@ -288,10 +308,12 @@ app.get('/athlete/:index/schedule', checkAuth, getFormLabels, (req,res)=> {
                         {
                           index: index,
                           columnnames: res.locals.columns,
-                          data: result.rows,
+                          data: JSON.stringify(result.rows),
                           title: "Schedule"
                         }
                       };
+
+                      console.log(output)
       res.render('schedule', output);
   })
 

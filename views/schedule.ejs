@@ -27,13 +27,13 @@
           dayMaxEvents: true, // allow 'more' link when too many events
           longPressDelay: 1000,
           events: [
-            <% data.data.forEach( (event) => { %>
+            <% JSON.parse(data.data).forEach( (event) => { %>
             // populate this list from ejs
             {
               id: <%= event.id %>,
               title: "<%= event.title %>",
-              // start: "<= event.date.toISOString().substring(0,10) %>",
-              // end: "<= event.date.toISOString().substring(0,10) %>",
+              start: "<%= event.date%>",
+              end: "<%= event.date%>",
               extendedProps: {
                 activitytype : "<%= event.activitytype%>",
                 distance : "<%= event.distance%>",
