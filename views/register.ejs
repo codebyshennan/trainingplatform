@@ -1,5 +1,5 @@
 <%- include('header-home') %>
-
+    <p></p>
     <main class="login-form">
     <div class="container">
         <div class="row justify-content-center">
@@ -35,6 +35,16 @@
                                     <input type="password" id="password" class="form-control" name="password" required>
                                 </div>
                             </div>
+                            <div class="form-group row">
+                                <label for="usertype" class="col-md-4 col-form-label text-md-right">User Type</label>
+                                <div class="col-md-6">
+                                    
+                                    <select id="usertype" class="form-select" name="usertype" required>
+                                        <option value = "athlete">Athlete</option>
+                                        <option value = "coach">Coach</option>
+                                    </select>
+                                </div>
+                            </div>
 
                             <div class="col-md-6 offset-md-4">
 
@@ -42,6 +52,8 @@
                                     Register
                                 </button>
                             </div>
+
+                            
                     </div>
                     </form>
                 </div>

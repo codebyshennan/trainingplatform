@@ -1,4 +1,4 @@
-<%- include('header', {index: `${output.index}`, title: `${output.title}`}) -%>
+<%- include('header', {index: `${data.index}`, title: `${data.title}`}) -%>
     <link href="/static/main.css" rel="stylesheet" />
     <script src="/static/main.js"></script>
 
@@ -27,34 +27,50 @@
           dayMaxEvents: true, // allow 'more' link when too many events
           longPressDelay: 1000,
           events: [
-            <% output.data.forEach( (event) => { %>
+            <% data.data.forEach( (event) => { %>
             // populate this list from ejs
             {
               id: <%= event.id %>,
               title: "<%= event.title %>",
-              start: "<%= event.date.toISOString().substring(0,10) %>",
-              end: "<%= event.date.toISOString().substring(0,10) %>",
+              // start: "<= event.date.toISOString().substring(0,10) %>",
+              // end: "<= event.date.toISOString().substring(0,10) %>",
+              extendedProps: {
+                activitytype : "<%= event.activitytype%>",
+                distance : "<%= event.distance%>",
+                calories : "<%= event.calories%>",
+                timetaken : "<%= event.timetaken%>",
+                avgHR : "<%= event.avgHR %>",
+                maxHR : "<%= event.maxHR %>",
+                createdon : "<%=event.createdon%>",
+              }
             },
 
             <% }); %>
           ],
           eventClick: (info) => {
             console.log('event >> ', info)
-            const modalTitle = document.getElementById('modalTitle');
+            const modalTitle = document.getElementById('infoModalTitle');
             modalTitle.innerText = info.event.title;
 
-            const modalBody = document.getElementById('modalBody');
-            modalBody.innerText = info.event.description;
-            var myModal = new bootstrap.Modal(document.getElementById('calendarModal'));
-            myModal.toggle();
+            const modalBody = document.getElementById('infoModalBody');
+            modalBody.innerHTML = 
+            `<p>${info.event.extendedProps.activitytype}</p>
+            <p>${info.event.extendedProps.distance}</p>
+            <p>${info.event.extendedProps.calories}</p>
+            <p>${info.event.extendedProps.timetaken}</p>
+            <p>${info.event.extendedProps.avgHR}</p>
+            <p>${info.event.extendedProps.maxHR}</p>
+            <p>${info.event.extendedProps.createdon}</p>`;
+            const infoModal = new bootstrap.Modal(document.getElementById('infoModal'));
+            infoModal.toggle();
 
           },
           select: (info) => {
             console.log('info >> ', info)
             // modalTitle.innerText = info.event.title;
             // modalBody.innerText = info.event.description;
-            var myModal = new bootstrap.Modal(document.getElementById('calendarModal'));
-            myModal.toggle();
+            var newModal = new bootstrap.Modal(document.getElementById('makeNewModal'));
+            newModal.toggle();
           },
         });
         calendar.render();
@@ -78,7 +94,7 @@
 
       #calendar {
         max-width: 100%;
-        max-height: 50vh;
+        max-height: 100%;
         margin: 0 auto;
       }
 
@@ -92,96 +108,52 @@
         line-height: 1.42857;
       }
     </style>
-  </head>
-  <body>
+<body>
     <!-- Init Table -->
     <div
       id="calendar"
       class="fc fc-media-screen fc-direction-ltr fc-theme-standard"
     ></div>
 
-    <div id="calendarModal" class="modal fade">
+    <div id="makeNewModal" class="modal fade">
       <div class="modal-dialog">
         <div class="modal-content">
           <div class="modal-header">
-            <h4 id="modalTitle" class="modal-title"></h4>
-
+            <h4 id="makeNewModalTitle" class="modal-title">Add New Activity</h4>
             <button type="button" class="close" data-bs-dismiss="modal">
               <span aria-hidden="true">×</span>
               <span class="sr-only">close</span>
             </button>
           </div>
-          <div id="modalBody" class="modal-body">
-            <form>
+
+          <div id="makeNewModalBody" class="modal-body">
+            <form method='POST' action='addactivity'>
               <div class="form-row">
+                <% JSON.parse(data.columnnames).forEach(column => {%> 
                 <div class="form-group col-md-6">
-                  <label for="inputEmail4">Email</label>
+                  <label for="<%= column %>"><%= column %></label>
                   <input
-                    type="email"
+                    type="<%= column %>"
                     class="form-control"
-                    id="inputEmail4"
-                    placeholder="Email"
+                    id="<%= column %>"
+                    name = "<%= column %>"
                   />
                 </div>
-                <div class="form-group col-md-6">
-                  <label for="inputPassword4">Password</label>
-                  <input
-                    type="password"
-                    class="form-control"
-                    id="inputPassword4"
-                    placeholder="Password"
-                  />
-                </div>
+                <% }); %> 
+              <button type="submit" class="btn btn-primary"> Add </button>
               </div>
-              <div class="form-group">
-                <label for="inputAddress">Address</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="inputAddress"
-                  placeholder="1234 Main St"
-                />
-              </div>
-              <div class="form-group">
-                <label for="inputAddress2">Address 2</label>
-                <input
-                  type="text"
-                  class="form-control"
-                  id="inputAddress2"
-                  placeholder="Apartment, studio, or floor"
-                />
-              </div>
-              <div class="form-row">
-                <div class="form-group col-md-6">
-                  <label for="inputCity">City</label>
-                  <input type="text" class="form-control" id="inputCity" />
-                </div>
-                <div class="form-group col-md-4">
-                  <label for="inputState">State</label>
-                  <select id="inputState" class="form-control">
-                    <option selected>Choose...</option>
-                    <option>...</option>
-                  </select>
-                </div>
-                <div class="form-group col-md-2">
-                  <label for="inputZip">Zip</label>
-                  <input type="text" class="form-control" id="inputZip" />
-                </div>
-              </div>
-              <div class="form-group">
-                <div class="form-check">
-                  <input
-                    class="form-check-input"
-                    type="checkbox"
-                    id="gridCheck"
-                  />
-                  <label class="form-check-label" for="gridCheck">
-                    Check me out
-                  </label>
-                </div>
-              </div>
-              <button type="submit" class="btn btn-primary">Sign in</button>
             </form>
+
+            <div class="form-row">
+              <form action="addactivity" method="post" enctype="multipart/form-data">
+                <label for="label">Upload training file:</label><br />
+                <input type="text" id="label" name="label" /><br />
+                <label for="file">Training File:</label><br />
+                <input type="file" name="trainingfile" />
+                <input type="submit" value="Submit" />
+              </form>
+            </div>
+
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-default" data-bs-dismiss="modal">
@@ -192,30 +164,30 @@
       </div>
     </div>
 
-  <!-- Button trigger modal -->
-  <button type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#exampleModalCenter">
-    <i class="fa fa-plus"></i>
-  </button>
+  
 
   <!-- Modal -->
-  <div class="modal fade" id="exampleModalCenter" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
+  <div id="infoModal" class="modal fade">
+    <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLongTitle">Modal title</h5>
-          <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
+          <h4 class="modal-title" id="infoModalTitle"></h4>
+          <button type="button" class="close" data-bs-dismiss="modal">
+              <span aria-hidden="true">×</span>
+              <span class="sr-only">close</span>
+            </button>
         </div>
-        <div class="modal-body">
-          ...
+        <div class="modal-body" id="infoModalBody">
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-          <button type="button" class="btn btn-primary">Save changes</button>
         </div>
       </div>
     </div>
   </div>
-  </body>
+
+  <!-- Button trigger modal -->
+  <button type="button" class="btn btn-primary btn-circle" data-bs-toggle="modal" data-bs-target="#makeNewModal">
+    <i class="fa fa-plus"></i>
+  </button>
+</body>
 </html>

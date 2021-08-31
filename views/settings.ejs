@@ -1,4 +1,4 @@
-<%- include('header', {"index": index, "title": title}) %>
+<%- include('header', {"index": data.index, "title": data.title}) %>
 
 <script>
   $(document).ready(function () {
@@ -22,7 +22,7 @@
 <div class="container">
   <div class="row">
     <div class="col-md-3">
-      <ul class="nav nav-pills admin-menu">
+      <ul class="nav nav-pills flex-column admin-menu">
         <li class="nav-item">
           <a href="" data-target-id="profile" class="nav-link"
             ><i class="glyphicon glyphicon-user"></i> Profile</a
@@ -51,27 +51,38 @@
         <div class="card-header">
           <h3 class="panel-title">Name</h3>
         </div>
-        <div class="card-body">Ashish Patel</div>
+        <div class="card-body">
+          <%= JSON.parse(data.data)[0].fname %> <%=
+          JSON.parse(data.data)[0].lname %>
+        </div>
       </div>
       <div class="card" style="margin: 1em">
         <div class="card-header">
-          <h3 class="panel-title">Email</h3>
+          <h3 class="panel-title">Username</h3>
         </div>
-        <div class="card-body">ashishpatel0720@gmail.com</div>
+        <div class="card-body"><%= JSON.parse(data.data)[0].username %></div>
       </div>
 
-      <form action="/recipe" method="post" enctype="multipart/form-data">
-        <label for="label">recipe label:</label><br />
-        <input type="text" id="label" name="label" /><br />
-        <label for="photo">recipe photo:</label><br />
-        <input type="file" name="photo" />
-        <input type="submit" value="Submit" />
-      </form>
+      <div class="card" style="margin: 1em">
+        <div class="card-header">
+          <h3 class="panel-title">Profile Photo</h3>
+        </div>
+        <div class="card-body">
+          <form action="settings" method="post" enctype="multipart/form-data">
+            <label for="label">Upload Profile Photo:</label><br />
+            <input type="text" id="label" name="label" /><br />
+            <label for="photo">Photo:</label><br />
+            <input type="file" name="photo" />
+            <input type="submit" value="Submit" />
+          </form>
+        </div>
+      </div>
+
       <div class="card" style="margin: 1em">
         <div class="card-header">
           <h3 class="panel-title">Last Password Change</h3>
         </div>
-        <div class="card-body">4 days Ago</div>
+        <div class="card-body"><%= JSON.parse(data.data)[0].createdon %></div>
       </div>
     </div>
     <div class="col-md-9 admin-content" id="settings">

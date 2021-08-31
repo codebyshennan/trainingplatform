@@ -5,6 +5,37 @@ import methodOverride from "method-override";
 import pg from "pg";
 import jsSHA from "jssha";
 import multer from 'multer';
+// import pkg from 'fit-file-parser/dist/fit-parser.js';
+// import fs from 'fs';
+
+// const {FitParser} = pkg;
+
+// fs.readFile('example.fit', function (err, content) {
+
+//   // Create a FitParser instance (options argument is optional)
+//   let fitParser = new FitParser({
+//     force: true,
+//     speedUnit: 'km/h',
+//     lengthUnit: 'km',
+//     temperatureUnit: 'kelvin',
+//     elapsedRecordField: true,
+//     mode: 'cascade',
+//   });
+  
+//   // Parse your file
+//   fitParser.parse(content, function (error, data) {
+  
+//     // Handle result of parse method
+//     if (error) {
+//       console.log(error);
+//     } else {
+//       console.log(JSON.stringify(data));
+//     }
+    
+//   });
+  
+// });
+
 
 
 // initialise express and define port parameters
@@ -13,7 +44,8 @@ const PORT = process.env.PORT || 3001;
 const SALT = process.env.SALT;
 
 // set the name of the upload directory here
-const multerUpload = multer({ dest: 'uploads/' });
+const multerFileUpload = multer({ dest: 'uploads/trainingfiles/' });
+const multerPhotoUpload = multer({ dest: 'uploads/profilephotos/' });
 
 // disables extensibility of URLencoding
 app.use(express.urlencoded( {extended: false} ));
@@ -125,22 +157,39 @@ app.get('/', (req,res)=> {
   res.render('home'); 
 })
 
+app.get('/about',(req,res)=>{
+  res.render('about');
+})
+
 // registration for athlete
-app.get('/athlete/register', (req,res)=> {
+app.get('/register', (req,res)=> {
   res.render('register');
-}).post('/athlete/register',(req,res)=> {
+}).post('/register',(req,res)=> {
+
+  const newregister = req.body; 
 
   const shaObj = new jsSHA('SHA-512','TEXT', {encoding: "UTF8"});
-  shaObj.update(req.body.password);
+  shaObj.update(newregister.password);
   const hashedpassword = shaObj.getHash('HEX');
-  const values = [req.body.fname, req.body.lname, req.body.username, hashedpassword];
-  pool.query('INSERT INTO athlete (fname,lname, username, password) VALUES ($1,$2,$3,$4) RETURNING *', values, (err,result)=> {
-    if(err) {console.error(err)}
-    console.log(result.rows[0]);
-    res.send('success');
-  }
-   )
-});
+
+  const values = [newregister.fname, newregister.lname, newregister.username, hashedpassword]; 
+
+  if(newregister.usertype === 'coach') {
+    pool.query(`INSERT INTO coach (fname, lname, username, password) 
+                VALUES ($1,$2,$3,$4) RETURNING *`, values,
+                (err,result)=> {
+                  if(err) {console.error(err)}
+                  res.send('success');
+                  })
+  } else {
+    pool.query(`INSERT INTO athlete (fname, lname, username, password) 
+                VALUES ($1,$2,$3,$4) RETURNING *`, values,
+                (err,result)=> {
+                  if(err) {console.error(err)}
+                  res.send('success');
+                  })
+    }
+  });
 
 // login routes for an athlete
 app.get('/athlete/login', (req,res)=>{
@@ -198,7 +247,7 @@ app.get('/athlete/:index/dashboard', checkAuth, (req,res)=> {
   const {index} = req.params;
   console.log(index);
 
-  pool.query(`SELECT to_char(training.date, 'YYYY-MM-DD') as date, CAST(training.distance AS DECIMAL) as distance FROM training WHERE athlete_ID = ${index} AND activitytype='Running' ORDER BY date ASC`, (err,result)=> {
+  pool.query(`SELECT to_char(training.date, 'YYYY-MM-DD') as date, CAST(training.distance AS DECIMAL) as distance FROM training WHERE athlete_id = ${index} AND activitytype='Running' ORDER BY date ASC`, (err,result)=> {
     console.log('result.rows >> ', result.rows)
     let data = result.rows.map(x => x = {date: x.date, distance: +x.distance} );
     // console.log(data);
@@ -213,59 +262,124 @@ app.get('/athlete/:index/dashboard', checkAuth, (req,res)=> {
 
 })
 
+const getFormLabels = (req,res,next) => {
+  pool.query('SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = \'training\';')
+  .then((result)=>{
+    let dataarray = []
+    result.rows.forEach(x => dataarray.unshift(x.column_name.toUpperCase()));
+    // remove last three
+    const columnnames = dataarray.slice(0, dataarray.length - 3);
+    console.log(columnnames);
+    res.locals.columns = JSON.stringify(columnnames);
+    next();
+  })
+}
+
 // User Story #: Athlete should be see his training schedule, past, present, future, and be able to add activities
 // athlete schedule
-app.get('/athlete/:index/schedule', checkAuth, (req,res)=> {
+app.get('/athlete/:index/schedule', checkAuth, getFormLabels, (req,res)=> {
 
   const {index} = req.params;
   console.log(index);
 
-  pool.query(`SELECT * FROM training WHERE athlete_ID = ${index}`, (err,result)=> {
+  pool.query(`SELECT * FROM training WHERE athlete_id = ${index}`, (err,result)=> {
 
-        const output = {output: 
-                        {index: index, 
-                        data: result.rows,
-                        title: "Schedule"}
-                    };
+        const output = {data: 
+                        {
+                          index: index,
+                          columnnames: res.locals.columns,
+                          data: result.rows,
+                          title: "Schedule"
+                        }
+                      };
       res.render('schedule', output);
   })
 
 })
 
+const addActivity = (req, res, next)=> {
+  if(req.file){
+    console.log(req.file);
+    
+    const sqlQuery = 'INSERT INTO trainingfiles (label, trainingfile) VALUES ($1, $2) RETURNING *';
+    // get the photo column value from request.file
+    const values = [req.body.label, req.file.filename];
+
+    // Query using pg.Pool instead of pg.Client
+    pool.query(sqlQuery, values, (error, result) => {
+      if (error) {
+        console.log('Error executing query', error.stack);
+        res.status(503).send(result.rows);
+        return;
+      }
+      console.log("resultrows", result.rows[0].name);
+      res.send(result.rows);
+      return;
+    });
+  } else {
+ 
+    const {index} = req.params;
+    const {TITLE, ACTIVITYTYPE, MAXHR, AVGHR, TIMETAKEN, CALORIES, DISTANCE, TIME, DATE} = req.body;
+    
+    const values = [ACTIVITYTYPE, DATE, TIME, TITLE, DISTANCE, CALORIES, TIMETAKEN, AVGHR, MAXHR, index];
+    console.log(values)
+
+    pool.query(`INSERT INTO training (activitytype, date, time, title, distance, calories, timetaken, avgHR, maxHR, athlete_ID) 
+    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`, values)
+    .then((result)=>{
+      res.send('add success')
+    })
+  }
+ 
+}
+
+app.post('/athlete/:index/addactivity', checkAuth, multerFileUpload.single('trainingfile'), addActivity)
+
 // User Story #: Athlete should be able to set and customise his profile to suit his tastes. He should be able to upload a photo that persists on his page.
 // athlete settings
 app.get('/athlete/:index/settings', checkAuth, (req,res)=> {
+   
 
   const {index} = req.params;
   console.log(index);
 
-  pool.query(`SELECT * FROM training WHERE athlete_ID = ${index}`, (err,result)=> {
-    const output = { index: index,
-    title: "Settings"};
+  pool.query(`SELECT * FROM athlete WHERE id = ${index}`, (err,result)=> {
+    const output = {data: 
+                          {
+                            index: index,
+                            title: "Settings",
+                            data: JSON.stringify(result.rows)
+                          }
+                    }
+
+    console.log(output)
     res.render('settings', output);
   })
 
-}).post('/athlete/:index/settings', checkAuth, multerUpload.single('photo'), (req,res)=> {
 
-  console.log('request came in');
-  console.log(request.file);
+}).post('/athlete/:index/settings', checkAuth, multerPhotoUpload.single('photo'), (req,res)=> {
+if(req.file){
+    console.log(req.file);
+    
+    const sqlQuery = 'INSERT INTO profilephotos (label, photo) VALUES ($1, $2) RETURNING *';
+    // get the photo column value from request.file
+    const values = [req.body.label, req.file.filename];
 
-  const sqlQuery = 'INSERT INTO photos (label, photo) VALUES ($1, $2)';
-  // get the photo column value from request.file
-  const values = [request.body.label, request.file.filename];
-
-  // Query using pg.Pool instead of pg.Client
-  pool.query(sqlQuery, values, (error, result) => {
-    if (error) {
-      console.log('Error executing query', error.stack);
-      response.status(503).send(result.rows);
+    // Query using pg.Pool instead of pg.Client
+    pool.query(sqlQuery, values, (error, result) => {
+      if (error) {
+        console.log('Error executing query', error.stack);
+        res.status(503).send(result.rows);
+        return;
+      }
+      console.log("resultrows", result.rows[0].name);
+      res.send(result.rows);
       return;
-    }
-    console.log(result.rows[0].name);
-    response.send(result.rows);
-  });
-
-
+    });
+  } else {
+    //do nothing yet
+    console.log('Done')
+  }
 })
 
 // User Story #: Athlete should be able to see his rankings and how he fares with others.
@@ -275,7 +389,7 @@ app.get('/athlete/:index/rankings', checkAuth, (req,res)=> {
   const {index} = req.params;
   console.log(index);
 
-  pool.query(`SELECT * FROM training WHERE athlete_ID = ${index}`, (err,result)=> {
+  pool.query(`SELECT * FROM training WHERE athlete_id = ${index}`, (err,result)=> {
     const output = { data: result.rows};
     console.log('output >> ', output.data[0]);
       res.render('schedule', output);
@@ -334,19 +448,54 @@ app.get('/coach/login', (req,res)=>{
   )
 })
 
-// User Story #: 
-app.get('/coach/:index/overview', checkAuth, (req,res)=> {
-
+const getCoachData = (req,res,next) => {
   const {index} = req.params;
-  console.log(index);
+  pool.query(`SELECT fname,lname FROM coach WHERE id = ${index}`)
+  .then((result)=> {
+    res.locals.coachdata = JSON.stringify(result.rows);
+    next();
+  }
+  )
+}
 
-  pool.query(`SELECT * FROM training WHERE athlete_ID = ${index}`, (err,result)=> {
-    const output = { data: result.rows};
-    console.log('output >> ', output.data[0]);
-      res.render('overview', output);
+// look for the athletes data of the coached athletes
+const getAthleteData = (req,res,next) => {
+  const {index} = req.params;
+  pool.query(`SELECT * FROM athlete INNER JOIN relation ON athlete.id = relation.athlete_id WHERE relation.coach_id = ${index}`)
+  .then((result)=> {
+    const athletedata = JSON.stringify(result.rows);
+    res.locals.athletedata = athletedata;
+    next();
   })
+}
 
-})
+// look for athletes that belong to the coach
+const getAthleteTrainingInfo = (req,res,next) => {
+  const {index} = req.params;
+
+  pool.query(`SELECT * FROM training INNER JOIN relation ON training.athlete_id = relation.athlete_id WHERE relation.coach_id = ${index}`)
+    .then((result)=> {
+
+      const trainingdata = JSON.stringify(result.rows);
+
+      const output = { data: 
+                        {
+                          index: index,
+                          coachdata: res.locals.coachdata,
+                          athletedata: res.locals.athletedata,
+                          trainingdata: trainingdata,
+                          title: 'Overview'
+                        }
+                    }
+
+      console.log(output);
+
+      res.render('overview', output)
+  })
+}
+
+// User Story #: 
+app.get('/coach/:index/overview', checkAuth, getCoachData, getAthleteData, getAthleteTrainingInfo);
 
 // TODO: User Story #: Coach should have his own Todo List
 
@@ -358,7 +507,7 @@ app.get('/coach/:index/athletes', checkAuth, (req,res)=> {
   const {index} = req.params;
   console.log(index);
 
-  pool.query(`SELECT * FROM training WHERE athlete_ID = ${index}`, (err,result)=> {
+  pool.query(`SELECT * FROM training WHERE athlete_id = ${index}`, (err,result)=> {
     const output = { data: result.rows};
     console.log('output >> ', output.data[0]);
       res.render('schedule', output);
