@@ -14,8 +14,9 @@
       role="tab"
       aria-controls="home"
       aria-selected="true"
-      >Home</a
     >
+      Home
+    </a>
   </li>
   <li class="nav-item">
     <a
@@ -26,8 +27,9 @@
       role="tab"
       aria-controls="profile"
       aria-selected="false"
-      >Profile</a
     >
+      Statistics
+    </a>
   </li>
   <li class="nav-item">
     <a
@@ -38,38 +40,219 @@
       role="tab"
       aria-controls="contact"
       aria-selected="false"
-      >Contact</a
     >
+      Bests
+    </a>
   </li>
 </ul>
 <div class="tab-content" id="myTabContent">
+  <!-- Home Tab -->
   <div
     class="tab-pane fade show active"
     id="home"
     role="tabpanel"
     aria-labelledby="home-tab"
   >
-    <div
-      class="chart-container"
-      style="position: relative; height: 40vh; width: 40vw"
-    >
-      <!-- <canvas id="myChart"></canvas> -->
-    </div>
-    <div
-      class="chart-container"
-      style="position: relative; height: 40vh; width: 40vw"
-    >
-      <canvas id="testchart"></canvas>
+    <div class="container-fluid">
+      <div class="row">
+        <div class="col-md-4">
+          <div class="row align-items-md-center">
+            <div class="col-md-1"><i class="fas fa-trophy"></i></div>
+            <div class="col-md-10"<strong>Events</strong></div>
+            <div class="col-md-1">+</div>
+          </div>
+          <div class="row align-items-md-center">
+            <div class="col-md-2"><i class="fas fa-award"></i>
+
+</div>
+            <div class="col-md-10">What are you training for</div>
+          </div>
+          <div class="row">
+            <div class="col-md-1">fa icon tick</div>
+            <div class="col-md-10">Goals</div>
+            <div class="col-md-1">+</div>
+          </div>
+          <div class="row">Stay on Track by adding your training goals</div>
+          <div class="row">
+            <div class="list-group">
+              <label class="list-group-item">
+                <input class="form-check-input me-1" type="checkbox" value="" />
+                First checkbox
+              </label>
+              <label class="list-group-item">
+                <input class="form-check-input me-1" type="checkbox" value="" />
+                Second checkbox
+              </label>
+              <label class="list-group-item">
+                <input class="form-check-input me-1" type="checkbox" value="" />
+                Third checkbox
+              </label>
+              <label class="list-group-item">
+                <input class="form-check-input me-1" type="checkbox" value="" />
+                Fourth checkbox
+              </label>
+              <label class="list-group-item">
+                <input class="form-check-input me-1" type="checkbox" value="" />
+                Fifth checkbox
+              </label>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-4">
+          <div class="row">
+            <div class="col-md-1">fa icon trophy</div>
+            <div class="col-md-10">Today</div>
+            <div class="col-md-1">+</div>
+          </div>
+          <div class="row">You have no scheduled workouts today/</div>
+          <div class="row">
+            <div class="col-md-1">fa icon trophy</div>
+            <div class="col-md-10">Tomorrow</div>
+            <div class="col-md-1">+</div>
+          </div>
+          <div class="row">You have no scheduled workouts tomorrow/</div>
+        </div>
+        <div class="col-md-4">
+          <div class="row justify-content-md-center">
+            <div class="col col-lg-2">1 of 3</div>
+            <div class="col-md-auto">Variable width content</div>
+            <div class="col col-lg-2">3 of 3</div>
+          </div>
+          <div class="row justify-content-md-center">Fitness Ramp Rates</div>
+          <div class="row">
+            <div class="col-md-6">Chart 1</div>
+            <div class="col-md-6">Chart 2</div>
+          </div>
+          <div class="row">
+            <div class="col-md-6">Chart 3</div>
+            <div class="col-md-6">Chart 4</div>
+          </div>
+          <div class="row">
+            <div class="col-md-1">fa icon medal</div>
+            <div class="col-md-10">Peak Performances</div>
+            <div class="col-md-1">View All</div>
+          </div>
+          <div class="row">
+            <div class="list-group">
+              <a
+                href="#"
+                class="list-group-item list-group-item-action active"
+                aria-current="true"
+              >
+                <div class="d-flex w-100 justify-content-between">
+                  <h5 class="mb-1">List group item heading</h5>
+                  <small>3 days ago</small>
+                </div>
+                <p class="mb-1">Some placeholder content in a paragraph.</p>
+                <small>And some small print.</small>
+              </a>
+              <a href="#" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                  <h5 class="mb-1">List group item heading</h5>
+                  <small class="text-muted">3 days ago</small>
+                </div>
+                <p class="mb-1">Some placeholder content in a paragraph.</p>
+                <small class="text-muted">And some muted small print.</small>
+              </a>
+              <a href="#" class="list-group-item list-group-item-action">
+                <div class="d-flex w-100 justify-content-between">
+                  <h5 class="mb-1">List group item heading</h5>
+                  <small class="text-muted">3 days ago</small>
+                </div>
+                <p class="mb-1">Some placeholder content in a paragraph.</p>
+                <small class="text-muted">And some muted small print.</small>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
+
+  <!-- Stats Tab -->
   <div
     class="tab-pane fade"
     id="profile"
     role="tabpanel"
     aria-labelledby="profile-tab"
   >
-    ...
+    <div
+      class="chart-container"
+      style="position: relative; height: 40vh; width: 40vw"
+    >
+      <canvas id="testchart"></canvas>
+      <div
+        class="modal fade"
+        id="exampleModalToggle"
+        aria-hidden="true"
+        aria-labelledby="exampleModalToggleLabel"
+        tabindex="-1"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalToggleLabel">Modal 1</h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              Show a second modal and hide this one with the button below.
+            </div>
+            <div class="modal-footer">
+              <button
+                class="btn btn-primary"
+                data-bs-target="#exampleModalToggle2"
+                data-bs-toggle="modal"
+                data-bs-dismiss="modal"
+              >
+                Open second modal
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div
+        class="modal fade"
+        id="exampleModalToggle2"
+        aria-hidden="true"
+        aria-labelledby="exampleModalToggleLabel2"
+        tabindex="-1"
+      >
+        <div class="modal-dialog modal-dialog-centered">
+          <div class="modal-content">
+            <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalToggleLabel2">Modal 2</h5>
+              <button
+                type="button"
+                class="btn-close"
+                data-bs-dismiss="modal"
+                aria-label="Close"
+              ></button>
+            </div>
+            <div class="modal-body">
+              Hide this modal and show the first with the button below.
+            </div>
+            <div class="modal-footer">
+              <button
+                class="btn btn-primary"
+                data-bs-target="#exampleModalToggle"
+                data-bs-toggle="modal"
+                data-bs-dismiss="modal"
+              >
+                Back to first
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
+
+  <!-- Bests Tab -->
   <div
     class="tab-pane fade"
     id="contact"
@@ -79,6 +262,8 @@
     ...
   </div>
 </div>
+
+
 
 <script>
   var testChart = new Chart(document.getElementById("testchart"), {

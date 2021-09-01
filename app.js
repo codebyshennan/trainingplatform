@@ -5,42 +5,9 @@ import methodOverride from "method-override";
 import pg from "pg";
 import jsSHA from "jssha";
 import multer from 'multer';
-// import pkg from 'fit-file-parser/dist/fit-parser.js';
-// import fs from 'fs';
-
-// const {FitParser} = pkg;
-
-// fs.readFile('example.fit', function (err, content) {
-
-//   // Create a FitParser instance (options argument is optional)
-//   let fitParser = new FitParser({
-//     force: true,
-//     speedUnit: 'km/h',
-//     lengthUnit: 'km',
-//     temperatureUnit: 'kelvin',
-//     elapsedRecordField: true,
-//     mode: 'cascade',
-//   });
-  
-//   // Parse your file
-//   fitParser.parse(content, function (error, data) {
-  
-//     // Handle result of parse method
-//     if (error) {
-//       console.log(error);
-//     } else {
-//       console.log(JSON.stringify(data));
-//     }
-    
-//   });
-  
-// });
-
-
-
 // initialise express and define port parameters
 const app = express();
-const PORT = 80;
+const PORT = 3001;
 const SALT = process.env.SALT;
 
 // set the name of the upload directory here
@@ -49,7 +16,7 @@ const multerPhotoUpload = multer({ dest: 'uploads/profilephotos/' });
 
 // disables extensibility of URLencoding
 app.use(express.urlencoded( {extended: false} ));
-
+app.use(express.json())
 // Override POST requests with query param ?_method=PUT to be PUT requests
 app.use(methodOverride('_method'));
 app.use(cookieParser());
@@ -99,6 +66,8 @@ app.use((req,res,next)=>{
   }
   next();
 })
+
+
 
 
 // auth middleware to restrict user states
@@ -172,6 +141,7 @@ if (process.env.ENV === 'PRODUCTION') {
 const {Pool} = pg;
 const pool = new Pool(pgConnectionConfigs);
 pool.connect();
+
 // base route to homepage
 app.get('/', (req,res)=> {
   res.render('home'); 
@@ -259,6 +229,28 @@ app.get('/athlete/login', (req,res)=>{
 })
 
 
+// Route for logging photos
+// app.use((req,res,next)=> {
+  
+//   if(req.session.loggedin === true) {
+
+//     const id = req.session.userid;
+
+//     pool.query(`SELECT * FROM profilephotos WHERE athlete_id = ${id}`, (err, data) => {
+//       if(err) {
+//         req.session.profilepic = 'new';
+//         console.log(req.session);
+//         return;
+//       }
+//       const profilehash = data.rows[0].photo;
+//       req.session.profilepic = profilehash.toString();
+
+//     })
+//   }
+
+//   next();
+// })
+
 
 // User Story #: Athlete should be able to get an overview of his training status
 // Athlete Dashboard
@@ -268,7 +260,6 @@ app.get('/athlete/:index/dashboard', checkAuth, (req,res)=> {
   console.log(index);
 
   pool.query(`SELECT to_char(training.date, 'YYYY-MM-DD') as date, CAST(training.distance AS DECIMAL) as distance FROM training WHERE athlete_id = ${index} AND activitytype='Running' ORDER BY date ASC`, (err,result)=> {
-    console.log('result.rows >> ', result.rows)
     let data = result.rows.map(x => x = {date: x.date, distance: +x.distance} );
     // console.log(data);
     const output = { output: 
@@ -316,7 +307,6 @@ app.get('/athlete/:index/schedule', checkAuth, getFormLabels, (req,res)=> {
                       console.log(output)
       res.render('schedule', output);
   })
-
 })
 
 const addActivity = (req, res, next)=> {
@@ -354,8 +344,16 @@ const addActivity = (req, res, next)=> {
   }
  
 }
+app.post('/athlete/:index/schedule/addactivity', checkAuth, multerFileUpload.single('trainingfile'), addActivity)
 
-app.post('/athlete/:index/addactivity', checkAuth, multerFileUpload.single('trainingfile'), addActivity)
+app.post('/athlete/:index/schedule', (req,res)=> {
+  console.log(req.body);
+  const {id, date} = req.body;
+  pool.query(`UPDATE training SET date = '${date}' WHERE id = ${id} RETURNING *`).then((response)=> res.status(200).send(response));
+})
+
+
+
 
 // User Story #: Athlete should be able to set and customise his profile to suit his tastes. He should be able to upload a photo that persists on his page.
 // athlete settings
@@ -370,6 +368,7 @@ app.get('/athlete/:index/settings', checkAuth, (req,res)=> {
                           {
                             index: index,
                             title: "Settings",
+                            photo: req.session.profilepic,
                             data: JSON.stringify(result.rows)
                           }
                     }
@@ -381,12 +380,13 @@ app.get('/athlete/:index/settings', checkAuth, (req,res)=> {
 
 }).post('/athlete/:index/settings', checkAuth, multerPhotoUpload.single('photo'), (req,res)=> {
 if(req.file){
+    const {index} = req.params;
     console.log(req.file);
     
-    const sqlQuery = 'INSERT INTO profilephotos (label, photo) VALUES ($1, $2) RETURNING *';
+    const sqlQuery = 'INSERT INTO profilephotos (athlete_id, photo) VALUES ($1, $2) RETURNING *';
     // get the photo column value from request.file
-    const values = [req.body.label, req.file.filename];
-
+    const values = [index, req.file.filename];
+    console.log('values >> ', values)
     // Query using pg.Pool instead of pg.Client
     pool.query(sqlQuery, values, (error, result) => {
       if (error) {
@@ -394,7 +394,7 @@ if(req.file){
         res.status(503).send(result.rows);
         return;
       }
-      console.log("resultrows", result.rows[0].name);
+      session.profilepic = result.rows[0].photo;
       res.send(result.rows);
       return;
     });
@@ -411,10 +411,17 @@ app.get('/athlete/:index/rankings', checkAuth, (req,res)=> {
   const {index} = req.params;
   console.log(index);
 
+  
   pool.query(`SELECT * FROM training WHERE athlete_id = ${index}`, (err,result)=> {
-    const output = { data: result.rows};
-    console.log('output >> ', output.data[0]);
-      res.render('schedule', output);
+    const output = { 
+                    data: {
+                      result: result.rows,
+                      title: 'Rankings',
+                      index: index
+                    }
+                  }
+    console.log('output >> ', output.data.result);
+      res.render('rankings', output);
   })
 
 })
@@ -476,7 +483,7 @@ const getCoachData = (req,res,next) => {
   .then((result)=> {
     res.locals.coachdata = JSON.stringify(result.rows);
     next();
-  }
+    }
   )
 }
 
@@ -500,7 +507,8 @@ const getAthleteTrainingInfo = (req,res,next) => {
 
       const trainingdata = JSON.stringify(result.rows);
 
-      const output = { data: 
+      const output = { 
+                      data: 
                         {
                           index: index,
                           coachdata: res.locals.coachdata,
@@ -537,14 +545,66 @@ app.get('/coach/:index/athletes', checkAuth, (req,res)=> {
 
 })
 
+// User Story #: Athlete should be see his training schedule, past, present, future, and be able to add activities
+// athlete schedule
+app.get('/coach/:index/timetable', checkAuth, getFormLabels, (req,res)=> {
 
+  const {index} = req.params;
+  console.log(index);
+
+  pool.query(`SELECT * FROM training INNER JOIN relation ON training.athlete_id = relation.athlete_id WHERE coach_id = ${index}`, (err,result)=> {
+
+        const output = {data: 
+                        {
+                          index: index,
+                          columnnames: res.locals.columns,
+                          data: JSON.stringify(result.rows),
+                          title: "Timetable"
+                        }
+                      };
+
+                      console.log(output)
+      res.render('timetable', output);
+  })
+})
+
+app.post('/coach/:index/schedule/addactivity', checkAuth, multerFileUpload.single('trainingfile'), addActivity)
+
+app.post('/coach/:index/schedule', (req,res)=> {
+  console.log(req.body);
+  const {id, date} = req.body;
+  pool.query(`UPDATE training SET date = '${date}' WHERE id = ${id} RETURNING *`).then((response)=> res.status(200).send(response));
+})
 
 // TODO: collision prevention
 
+// User Story #: Athlete should be able to see his rankings and how he fares with others.
+// athlete rankings
+app.get('/coach/:index/rankings', checkAuth, (req,res)=> {
+
+  const {index} = req.params;
+  console.log(index);
+
+  
+  pool.query(`SELECT * FROM training WHERE athlete_id = ${index}`, (err,result)=> {
+    const output = { 
+                    data: {
+                      result: result.rows,
+                      title: 'Rankings',
+                      index: index
+                    }
+                  }
+    console.log('output >> ', output.data.result);
+      res.render('rankings', output);
+  })
+
+})
+
 // logout routing, deletes the session state
 app.get('/logout', (req,res)=>{
-  req.session.destroy();
-  res.redirect('/athlete/login');
+  req.session.loggedin = false;
+  req.session.destroy(()=>{res.redirect('/athlete/login')});
+
 })
 
 app.listen(PORT, ()=> console.log(`App running at port ${PORT}`));

@@ -3,7 +3,8 @@ DROP TABLE IF EXISTS coach CASCADE;
 DROP TABLE IF EXISTS relation CASCADE;
 DROP TABLE IF EXISTS training CASCADE;
 DROP TABLE IF EXISTS photos CASCADE;
-
+DROP TABLE IF EXISTS profilephotos CASCADE;
+DROP TABLE IF EXISTS trainingfiles CASCADE;
 
 CREATE TABLE trainingfiles (
   id SERIAL NOT NULL PRIMARY KEY,
@@ -13,7 +14,7 @@ CREATE TABLE trainingfiles (
 
 CREATE TABLE profilephotos (
   id SERIAL NOT NULL PRIMARY KEY,
-  label TEXT,
+  athlete_id INTEGER,
   photo TEXT
 );
 

@@ -68,13 +68,29 @@
           <h3 class="panel-title">Profile Photo</h3>
         </div>
         <div class="card-body">
-          <form action="settings" method="post" enctype="multipart/form-data">
-            <label for="label">Upload Profile Photo:</label><br />
-            <input type="text" id="label" name="label" /><br />
-            <label for="photo">Photo:</label><br />
-            <input type="file" name="photo" />
-            <input type="submit" value="Submit" />
-          </form>
+          <div class="row">
+            <div class="col-6">
+              <img
+                src="/profilephotos/<%= data.photo %> "
+                class="rounded-circle"
+                style="height: 200px"
+                alt="Profile Picture"
+              />
+            </div>
+            <div class="col-6">
+              <form
+                action="settings"
+                method="post"
+                enctype="multipart/form-data"
+              >
+                <label for="label">Upload Profile Photo:</label><br />
+                <input type="text" id="label" name="label" /><br />
+                <label for="photo">Photo:</label><br />
+                <input type="file" name="photo" />
+                <input type="submit" value="Submit" />
+              </form>
+            </div>
+          </div>
         </div>
       </div>
 
