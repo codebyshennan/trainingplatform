@@ -556,9 +556,13 @@ const getAthleteTrainingInfo = (req,res,next) => {
 
   pool.query(`SELECT * FROM training INNER JOIN relation ON training.athlete_id = relation.athlete_id WHERE relation.coach_id = ${index}`)
     .then((result)=> {
-
+      // Array: list all the trainings that are by athletes coached by this coach
       const trainingdata = JSON.stringify(result.rows);
-
+      // extract unique athlete id
+      // sort
+      // const array1=[]
+      // for()
+      // [{athlete:[trainings]}, {athlete:[trainings]}, {athlete:[trainings]}]
       const output = { 
                       data: 
                         {
