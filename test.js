@@ -76,13 +76,15 @@ let domString = readFile('garmin.tcx', 'utf-8', (err,data)=>{
   // do Stuff with the file
   // so much work just to get the calories
     console.log('calories >> ', event.activities[0].stats.get('Energy').value);
-    console.log('timetaken in secs >> ', event.activities[0].stats.get('Duration').value);
+    console.log('timetaken >> ', new Date(event.activities[0].stats.get('Duration').value * 1000).toISOString().substr(11, 8));
     console.log('distance >> ', event.activities[0].stats.get('Distance').value / 1000);
     console.log('maxHR >> ', event.activities[0].stats.get('Maximum Heart Rate').value);
     console.log('avgHR >> ', event.activities[0].stats.get('Average Heart Rate').value);
     console.log('startdate >> ', event.activities[0].startDate);
     console.log('enddate >> ', event.activities[0].endDate);
     console.log('activitytype >> ', event.activities[0].type);
+    console.log(event.getDistance())
+    console.log(event.toJSON())
   });
 })
 // console.log('domString >> ', domString)

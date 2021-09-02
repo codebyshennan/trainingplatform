@@ -9,20 +9,20 @@
 />
 
 <div class="container-fluid">
-  <div class="row">
+  <div class="row justify-content-center">
     <% JSON.parse(data.athletedata).forEach(athlete => { %>
     <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
       <div class="tile">
         <div class="wrapper">
-          <div class="header"><%= athlete.fName %> <%= athlete.lname %></div>
-
           <div class="banner-img">
             <img
               src="http://via.placeholder.com/640x360"
-              class="img-thumbnail"
+              class="rounded-circle"
+              style="width: 200px; height: 200px"
               alt="Image 1"
             />
           </div>
+          <div class="header"><%= athlete.fname%>, <%= athlete.lname%></div>
 
           <div class="dates">
             <div class="start">
@@ -31,32 +31,51 @@
               <span></span>
             </div>
             <div class="ends">
-              <strong> JOIN DATE</strong> <%= athlete.createdon %>
+              <strong> JOIN DATE</strong> <%=
+              Date(athlete.createdon).substr(0,10) %>
             </div>
           </div>
 
           <div class="stats">
-            <div><strong>INVITED</strong> 3098</div>
+            <div>
+              <strong>ACTIVITIES<br />ALL TIME</strong> 3098
+            </div>
 
-            <div><strong>JOINED</strong> 562</div>
+            <div>
+              <strong>DURATION<br />ALL TIME</strong> 562
+            </div>
 
-            <div><strong>DECLINED</strong> 182</div>
+            <div>
+              <strong>DISTANCE<br />ALL TIME</strong>
+            </div>
           </div>
 
           <div class="stats">
-            <div><strong>INVITED</strong> 3098</div>
+            <div>
+              <strong>ACTIVITIES<br />THIS MONTH</strong> 3098
+            </div>
 
-            <div><strong>JOINED</strong> 562</div>
+            <div>
+              <strong>DURATION<br />THIS MONTH</strong> 562
+            </div>
 
-            <div><strong>DECLINED</strong> 182</div>
+            <div>
+              <strong>DISTANCE<br />THIS MONTH</strong>
+            </div>
           </div>
 
           <div class="stats">
-            <div><strong>INVITED</strong> 3098</div>
+            <div>
+              <strong>CALORIES <br />BURNT</strong> 3098
+            </div>
 
-            <div><strong>JOINED</strong> 562</div>
+            <div>
+              <strong>AVERAGE<br />HEARTRATE</strong> 562
+            </div>
 
-            <div><strong>DECLINED</strong> 182</div>
+            <div>
+              <strong>MAX<br />HEARTRATE</strong> 182
+            </div>
           </div>
 
           <div class="footer">

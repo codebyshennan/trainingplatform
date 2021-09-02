@@ -2,21 +2,9 @@ DROP TABLE IF EXISTS athlete CASCADE;
 DROP TABLE IF EXISTS coach CASCADE;
 DROP TABLE IF EXISTS relation CASCADE;
 DROP TABLE IF EXISTS training CASCADE;
-DROP TABLE IF EXISTS photos CASCADE;
 DROP TABLE IF EXISTS profilephotos CASCADE;
 DROP TABLE IF EXISTS trainingfiles CASCADE;
 
-CREATE TABLE trainingfiles (
-  id SERIAL NOT NULL PRIMARY KEY,
-  label TEXT,
-  trainingfile TEXT
-);
-
-CREATE TABLE profilephotos (
-  id SERIAL NOT NULL PRIMARY KEY,
-  athlete_id INTEGER,
-  photo TEXT
-);
 
 CREATE TABLE IF NOT EXISTS athlete 
 (
@@ -60,6 +48,17 @@ CREATE TABLE IF NOT EXISTS training(
   ,maxHR                  NUMERIC(6,2)
   ,athlete_ID             INTEGER REFERENCES athlete(id)
   ,createdon              TIMESTAMPTZ DEFAULT NOW()
+  ,createdby              TEXT DEFAULT 'me'
 );
 
+CREATE TABLE trainingfiles (
+  id SERIAL NOT NULL PRIMARY KEY,
+  athlete_id INTEGER REFERENCES athlete(id),
+  trainingfile TEXT
+);
 
+CREATE TABLE profilephotos (
+  id SERIAL NOT NULL PRIMARY KEY,
+  athlete_id INTEGER REFERENCES athlete(id),
+  photo TEXT
+);
