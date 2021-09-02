@@ -112,14 +112,53 @@
         font-size: 12px;
         line-height: 1.42857;
       }
+
     </style>
 
 <p></p>
-    <!-- Init Table -->
-    <div
-      id="calendar"
-      class="fc fc-media-screen fc-direction-ltr fc-theme-standard"
-    ></div>
+
+<div class="container-fluid">
+  <div class="row">
+    <div class="col-3">
+      <div class="d-flex flex-column align-items-stretch flex-shrink-0 bg-white">
+        
+        <a href="#" class="d-flex align-items-center flex-shrink-0 p-3 link-dark text-decoration-none border-bottom">
+          <span class="fs-5 fw-semibold">Athletes</span>
+        </a>
+
+        <div class="list-group list-group-flush border-bottom scrollarea">
+
+          <!-- All athletes combined -->
+          <a href="#" class="list-group-item list-group-item-action active py-3 lh-tight" aria-current="true">
+            <div class="d-flex w-100 align-items-center justify-content-between">
+              <strong class="mb-1">All Athletes</strong>
+              <small>Wed</small>
+            </div>
+            <div class="col-10 mb-1 small">Some placeholder content in a paragraph below the heading and date.</div>
+          </a>
+
+          <!-- Populates the list with all the athletes -->
+          <a href="#" class="list-group-item list-group-item-action py-3 lh-tight">
+            <div class="d-flex w-100 align-items-center justify-content-between">
+              <strong class="mb-1">List group item heading</strong>
+              <small class="text-muted">Tues</small>
+            </div>
+            <div class="col-10 mb-1 small">Some placeholder content in a paragraph below the heading and date.</div>
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-9">
+      <!-- Init Table -->
+      <div
+        id="calendar"
+        class="fc fc-media-screen fc-direction-ltr fc-theme-standard"
+      >
+      </div>
+    </div>
+  </div>
+</div>
 
     <div id="makeNewModal" class="modal fade">
       <div class="modal-dialog">

@@ -8,7 +8,7 @@ import multer from 'multer';
 import {readFile} from 'fs';
 import tcx from 'tcx-js';
 import { JSDOM } from 'jsdom';
-import {SportsLib} from '@sports-alliance/sports-lib';
+import { SportsLib } from '@sports-alliance/sports-lib';
 import { DOMParser } from 'xmldom'
 // initialise express and define port parameters
 const app = express();
@@ -248,7 +248,7 @@ app.use((req,res,next)=> {
 
     const id = req.session.userid;
 
-    pool.query(`SELECT * FROM profilephotos WHERE athlete_id = ${id}`, (err, data) => {
+    pool.query(`SELECT * FROM profilephotos WHERE athleteid = ${id}`, (err, data) => {
       if(err) {
         console.error(err);
         return;
@@ -276,11 +276,12 @@ app.get('/athlete/:index/dashboard', checkAuth, (req,res)=> {
   const {index} = req.params;
   console.log(index);
 
-  pool.query(`SELECT to_char(training.date, 'YYYY-MM-DD') as date, CAST(training.distance AS DECIMAL) as distance FROM training WHERE athlete_id = ${index} AND activitytype='Running' ORDER BY date ASC`, (err,result)=> {
+  pool.query(`SELECT to_char(training.date, 'YYYY-MM-DD') as date, CAST(training.distance AS DECIMAL) as distance FROM training WHERE athleteid = ${index} AND activitytype='Running' ORDER BY date ASC`, (err,result)=> {
     let data = result.rows.map(x => x = {date: x.date, distance: +x.distance} );
     // console.log(data);
     const output = { output: 
-                      {index: index, 
+                      {index: index,
+                      username: req.session.username, 
                       title: "DashBoard",
                       chartdata: data}
                     };
@@ -307,15 +308,16 @@ const getFormLabels = (req,res,next) => {
 app.get('/athlete/:index/schedule', checkAuth, getFormLabels, (req,res)=> {
 
   const {index} = req.params;
-
-  pool.query(`SELECT * FROM training WHERE athlete_id = ${index}`, (err,result)=> {
+  console.log('req.session.username >> ', req.session.username)
+  pool.query(`SELECT * FROM training WHERE athleteid = ${index}`, (err,result)=> {
 
         const output = {data: 
                         {
                           index: index,
                           columnnames: res.locals.columns,
                           data: JSON.stringify(result.rows),
-                          title: "Schedule"
+                          title: "Schedule",
+                          username: JSON.stringify(req.session.username), 
                         }
                       };
 
@@ -343,12 +345,12 @@ const extractInfo = (req,res,next) => {
         new Date(jsondata.stats.Duration * 1000).toISOString().substr(11,8), // timetaken
         jsondata.stats['Average Heart Rate'], // avghr
         jsondata.stats['Maximum Heart Rate'], // maxhr
-        req.session.userid, // athlete_id
+        req.session.userid, // athleteid
         req.session.username, // createdby
       ]
 
       pool.query(`INSERT INTO 
-      training (activitytype, date, time, title, distance, calories, timetaken, avgHR, maxHR, athlete_ID, createdby) 
+      training (activitytype, date, time, title, distance, calories, timetaken, avghr, maxhr, athleteid, createdby) 
       VALUES   (    $1,        $2,   $3,   $4,      $5,       $6,       $7,       $8,    $9,      $10,        $11) 
       RETURNING *`, values)
       .then((queryResult)=>{
@@ -359,7 +361,7 @@ const extractInfo = (req,res,next) => {
 }
 
 const updateDB = (req, res)=> {
-    const sqlQuery = 'INSERT INTO trainingfiles (athlete_id, trainingfile) VALUES ($1, $2) RETURNING *';
+    const sqlQuery = 'INSERT INTO trainingfiles (athleteid, trainingfile) VALUES ($1, $2) RETURNING *';
     // get the photo column value from request.file
     const values = [req.session.userid, req.file.filename];
 
@@ -383,11 +385,11 @@ const addActivity = (req, res, next)=> {
   } else {
  
     const {index} = req.params;
-    const {TITLE, ACTIVITYTYPE, MAXHR, AVGHR, TIMETAKEN, CALORIES, DISTANCE, TIME, DATE} = req.body;
+    const {TITLE, ACTIVITYTYPE, MAXhr, AVGhr, TIMETAKEN, CALORIES, DISTANCE, TIME, DATE} = req.body;
     
-    const values = [ACTIVITYTYPE, DATE, TIME, TITLE, DISTANCE, CALORIES, TIMETAKEN, AVGHR, MAXHR, index];
+    const values = [ACTIVITYTYPE, DATE, TIME, TITLE, DISTANCE, CALORIES, TIMETAKEN, AVGhr, MAXhr, index];
 
-    pool.query(`INSERT INTO training (activitytype, date, time, title, distance, calories, timetaken, avgHR, maxHR, athlete_ID) 
+    pool.query(`INSERT INTO training (activitytype, date, time, title, distance, calories, timetaken, avghr, maxhr, athleteid) 
     VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`, values)
     .then((result)=>{
       res.send('add success')
@@ -435,7 +437,7 @@ if(req.file){
     const {index} = req.params;
     console.log(req.file);
     
-    const sqlQuery = 'INSERT INTO profilephotos (athlete_id, photo) VALUES ($1, $2) RETURNING *';
+    const sqlQuery = 'INSERT INTO profilephotos (athleteid, photo) VALUES ($1, $2) RETURNING *';
     // get the photo column value from request.file
     const values = [index, req.file.filename];
     console.log('values >> ', values)
@@ -464,7 +466,7 @@ app.get('/athlete/:index/data', checkAuth, (req,res)=> {
   console.log(index);
 
   
-  pool.query(`SELECT * FROM training WHERE athlete_id = ${index}`, (err,result)=> {
+  pool.query(`SELECT * FROM training WHERE athleteid = ${index}`, (err,result)=> {
     const output = { 
                     data: {
                       result: result.rows,
@@ -542,7 +544,7 @@ const getCoachData = (req,res,next) => {
 // look for the athletes data of the coached athletes
 const getAthleteData = (req,res,next) => {
   const {index} = req.params;
-  pool.query(`SELECT * FROM athlete INNER JOIN relation ON athlete.id = relation.athlete_id WHERE relation.coach_id = ${index}`)
+  pool.query(`SELECT * FROM athlete INNER JOIN relation ON athlete.id = relation.athleteid WHERE relation.coachid = ${index}`)
   .then((result)=> {
     const athletedata = JSON.stringify(result.rows);
     res.locals.athletedata = athletedata;
@@ -554,7 +556,7 @@ const getAthleteData = (req,res,next) => {
 const getAthleteTrainingInfo = (req,res,next) => {
   const {index} = req.params;
 
-  pool.query(`SELECT * FROM training INNER JOIN relation ON training.athlete_id = relation.athlete_id WHERE relation.coach_id = ${index}`)
+  pool.query(`SELECT * FROM training INNER JOIN relation ON training.athleteid = relation.athleteid WHERE relation.coachid = ${index}`)
     .then((result)=> {
       // Array: list all the trainings that are by athletes coached by this coach
       const trainingdata = JSON.stringify(result.rows);
@@ -593,7 +595,7 @@ app.get('/coach/:index/athletes', checkAuth, (req,res)=> {
   const {index} = req.params;
   console.log(index);
 
-  pool.query(`SELECT * FROM training WHERE athlete_id = ${index}`, (err,result)=> {
+  pool.query(`SELECT * FROM training WHERE athleteid = ${index}`, (err,result)=> {
     const output = { data: result.rows};
     console.log('output >> ', output.data[0]);
       res.render('schedule', output);
@@ -608,7 +610,7 @@ app.get('/coach/:index/timetable', checkAuth, getFormLabels, (req,res)=> {
   const {index} = req.params;
   console.log(index);
 
-  pool.query(`SELECT * FROM training INNER JOIN relation ON training.athlete_id = relation.athlete_id WHERE coach_id = ${index}`, (err,result)=> {
+  pool.query(`SELECT * FROM training INNER JOIN relation ON training.athleteid = relation.athleteid WHERE coachid = ${index}`, (err,result)=> {
 
         const output = {data: 
                         {
@@ -642,7 +644,7 @@ app.get('/coach/:index/rankings', checkAuth, (req,res)=> {
   console.log(index);
 
   
-  pool.query(`SELECT * FROM training WHERE athlete_id = ${index}`, (err,result)=> {
+  pool.query(`SELECT * FROM training WHERE athleteid = ${index}`, (err,result)=> {
     const output = { 
                     data: {
                       result: result.rows,
