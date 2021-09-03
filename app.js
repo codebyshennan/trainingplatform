@@ -328,6 +328,8 @@ app.get('/athlete/:index/schedule', checkAuth, getFormLabels, (req,res)=> {
 
 
 const extractInfo = (req,res,next) => {
+
+  // TODO: detect filetype and parse accordingly
   const filepath = req.file.path
   readFile(filepath, 'utf-8', (error, readFileResult)=>{
     SportsLib.importFromTCX(new DOMParser().parseFromString(readFileResult,'text/xml'))
@@ -423,7 +425,8 @@ app.get('/athlete/:index/settings', checkAuth, (req,res)=> {
                             index: index,
                             title: "Settings",
                             photo: req.session.profilepic,
-                            data: JSON.stringify(result.rows)
+                            data: JSON.stringify(result.rows),
+                            username: req.session.username
                           }
                     }
 
@@ -471,7 +474,8 @@ app.get('/athlete/:index/data', checkAuth, (req,res)=> {
                     data: {
                       result: result.rows,
                       title: 'Data',
-                      index: index
+                      index: index,
+                      username: req.session.username
                     }
                   }
     console.log('output >> ', output.data.result);
@@ -663,6 +667,14 @@ app.get('/logout', (req,res)=>{
   req.session.loggedin = false;
   req.session.destroy(()=>{res.redirect('/athlete/login')});
 
+})
+
+app.get('/test', (req,res)=> {
+  res.render('test');
+})
+
+app.get('*', (req,res)=> {
+  app.redirect('404')
 })
 
 app.listen(PORT, ()=> console.log(`App running at port ${PORT}`));
