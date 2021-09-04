@@ -3,6 +3,9 @@ INSERT INTO athlete (fname, lname, username, password) VALUES ('Chuanxin', 'x', 
 INSERT INTO athlete (fname, lname, username, password) VALUES ('Jiaen', 'Chiew', 'en', '3627909a29c31381a071ec27f7c9ca97726182aed29a7ddd2e54353322cfb30abb9e3a6df2ac2c20fe23436311d678564d0c8d305930575f60e2d3d048184d79');
 INSERT INTO coach (fname, lname, username, password) VALUES ('Akira', 'Wong', 'coach', '7d5bda3df93cfbef4fef07208d9c56f482d677d85e8f47e16f1f9dbc6f415bc709045eaf0a1df3ecfb9066e2e851ae3e1cd6481a2bd58fb8294cf637f0fc68d5');
 
+INSERT INTO athlete (fname, lname, username, password) VALUES ('Akira', 'Wong', 'coach', '7d5bda3df93cfbef4fef07208d9c56f482d677d85e8f47e16f1f9dbc6f415bc709045eaf0a1df3ecfb9066e2e851ae3e1cd6481a2bd58fb8294cf637f0fc68d5');
+
+
 INSERT INTO relation (coachid, athleteid) VALUES (1,1),(1,2),(1,3);
 
 INSERT INTO training (activitytype, date, time, title, distance, calories, timetaken, avghr, maxHR, athleteid) 

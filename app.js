@@ -671,6 +671,8 @@ app.get('/logout', (req,res)=>{
 
 app.get('/test', (req,res)=> {
   res.render('test');
+}).post('/test', (req,res)=> {
+  console.log(req.body)
 })
 
 app.get('*', (req,res)=> {
