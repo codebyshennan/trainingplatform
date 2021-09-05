@@ -59,19 +59,19 @@ document.addEventListener('DOMContentLoaded', ()=>{
     const value = e.target.value;
     switch (value) {
       case "swimming":
-        infoactivitylist.innerHTML = `<i class="fas fa-swimmer" style="font-size: 3rem"></i>`
+        infoactivitytype.innerHTML = `<i class="fas fa-swimmer" style="font-size: 3rem"></i>`
         break;
 
       case "running":
-        infoactivitylist.innerHTML = `<i class="fas fa-running" style="font-size: 3rem"></i>`
+        infoactivitytype.innerHTML = `<i class="fas fa-running" style="font-size: 3rem"></i>`
         break;
 
       case "cycling":
-        infoactivitylist.innerHTML = `<i class="fas fa-biking" style="font-size: 3rem"></i>`
+        infoactivitytype.innerHTML = `<i class="fas fa-biking" style="font-size: 3rem"></i>`
         break;
 
       case "gym":
-        infoactivitylist.innerHTML = `<i class="fas fa-dumbbell" style="font-size: 3rem"></i>`
+        infoactivitytype.innerHTML = `<i class="fas fa-dumbbell" style="font-size: 3rem"></i>`
         break;
 
       default:
@@ -160,8 +160,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   infoformentry.addEventListener('change',(ev)=>{
 
-    const plantimearray = plannedtime.value.split(':')
-    const actualtimearray = actualtimetaken.value.split(':')
+    const plantimearray = infoplannedtime.value.split(':')
+    const actualtimearray = infoactualtimetaken.value.split(':')
     const gettime = (array) => {
       const hours = +array[0] * 60 * 60;
       const minutes = +array[1] * 60;

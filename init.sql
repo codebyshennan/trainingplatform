@@ -14,14 +14,6 @@ BEGIN
   END LOOP;
 END $$ ;
 
-
-DROP TABLE IF EXISTS athlete CASCADE;
-DROP TABLE IF EXISTS coach CASCADE;
-DROP TABLE IF EXISTS relation CASCADE;
-DROP TABLE IF EXISTS training CASCADE;
-DROP TABLE IF EXISTS profilephotos CASCADE;
-DROP TABLE IF EXISTS trainingfiles CASCADE;
-DROP TABLE IF EXISTS trainingplan CASCADE;
 DROP FUNCTION add_todo CASCADE;
 DROP FUNCTION add_comments CASCADE;
 DROP TRIGGER todo ON athlete;
@@ -63,18 +55,19 @@ CREATE TABLE IF NOT EXISTS relation
 
 CREATE TABLE IF NOT EXISTS trainingplan (
   id SERIAL PRIMARY KEY,
+  description TEXT,
   activitytype TEXT,
-  date DATE,
-  time TIME,
+  perceivedexertion INTEGER,
+  datetime TIMESTAMPTZ,
   title TEXT,
   distance NUMERIC(6,2),
-  calories INTEGER,
   timetaken TIME,
-  avgHR NUMERIC(6,2),
-  maxHR NUMERIC(6,2),
+  avgpace NUMERIC(6,2),
+  avghr NUMERIC(6,2),
+  coachid INTEGER REFERENCES coach(id),
   athleteid INTEGER REFERENCES athlete(id),
   createdon TIMESTAMPTZ DEFAULT NOW(),
-  createdby TEXT 
+  createdby TEXT
 );
 
 
@@ -85,8 +78,7 @@ CREATE TABLE IF NOT EXISTS training
   description TEXT,
   activitytype TEXT,
   perceivedexertion INTEGER,
-  date DATE,
-  time TIME,
+  datetime TIMESTAMPTZ,
   title TEXT,
   distance NUMERIC(6,2),
   calories INTEGER,

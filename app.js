@@ -5,11 +5,16 @@ import methodOverride from "method-override";
 import pg from "pg";
 import jsSHA from "jssha";
 import multer from 'multer';
-import {readFile} from 'fs';
+import fs from 'fs';
 import tcx from 'tcx-js';
 import { JSDOM } from 'jsdom';
 import { SportsLib } from '@sports-alliance/sports-lib';
+import { EventExporterGPX } from '@sports-alliance/sports-lib/lib/events/adapters/exporters/exporter.gpx.js'
+
 import { DOMParser } from 'xmldom'
+
+
+
 // initialise express and define port parameters
 const app = express();
 const PORT = 3001;
@@ -317,7 +322,7 @@ app.get('/athlete/:index/schedule', checkAuth, getFormLabels, (req,res)=> {
                           columnnames: res.locals.columns,
                           data: JSON.stringify(result.rows),
                           title: "Schedule",
-                          username: JSON.stringify(req.session.username), 
+                          username: req.session.username, 
                         }
                       };
 
@@ -330,36 +335,150 @@ app.get('/athlete/:index/schedule', checkAuth, getFormLabels, (req,res)=> {
 const extractInfo = (req,res,next) => {
 
   // TODO: detect filetype and parse accordingly
+  const extension = req.file.originalname.substr(req.file.originalname.length-3,3)
+  console.log(extension)
   const filepath = req.file.path
-  readFile(filepath, 'utf-8', (error, readFileResult)=>{
-    SportsLib.importFromTCX(new DOMParser().parseFromString(readFileResult,'text/xml'))
-    .then((importResult)=>{
-    // do Stuff with the file
-    // so much work just to get the calories
-      const jsondata = importResult.toJSON();
-      const values = [
-        jsondata['Activity Types'][0], // activitytype
-        new Date(jsondata.startDate).toISOString().substr(0,10), // date
-        new Date(jsondata.startDate).toISOString().substr(11,8), // time
-        jsondata['name'], // title
-        jsondata.stats.Distance / 1000, // distance
-        jsondata.stats.Energy, // calories
-        new Date(jsondata.stats.Duration * 1000).toISOString().substr(11,8), // timetaken
-        jsondata.stats['Average Heart Rate'], // avghr
-        jsondata.stats['Maximum Heart Rate'], // maxhr
-        req.session.userid, // athleteid
-        req.session.username, // createdby
-      ]
+  let outputGpxFilePath = 'uploads/trainingfiles/tmp.gpx'
 
-      pool.query(`INSERT INTO 
-      training (activitytype, date, time, title, distance, calories, timetaken, avghr, maxhr, athleteid, createdby) 
-      VALUES   (    $1,        $2,   $3,   $4,      $5,       $6,       $7,       $8,    $9,      $10,        $11) 
-      RETURNING *`, values)
-      .then((queryResult)=>{
-        res.send(queryResult.rows[0]);
-      })
-    });
-  })
+  switch (extension) {
+    case 'tcx':
+      
+      fs.readFile(filepath, 'utf-8', (error, readFileResult)=>{
+        console.log(readFileResult);
+      SportsLib.importFromTCX(new DOMParser().parseFromString(readFileResult,'text/xml'))
+      .then((importResult)=>{
+      // do Stuff with the file
+      // so much work just to get the calories
+        const jsondata = importResult.toJSON();
+        console.log(jsondata)
+        const values = [
+          jsondata.stats['Activity Types'][0], // activitytype
+          new Date(jsondata.startDate).toISOString().substr(0,10), // date
+          new Date(jsondata.startDate).toISOString().substr(11,8), // time
+          jsondata['name'], // title
+          jsondata.stats.Distance / 1000, // distance
+          jsondata.stats.Energy, // calories
+          new Date(jsondata.stats.Duration * 1000).toISOString().substr(11,8), // timetaken
+          jsondata.stats['Average Heart Rate'], // avghr
+          jsondata.stats['Maximum Heart Rate'], // maxhr
+          req.session.userid, // athleteid
+          req.session.username, // createdby
+        ]
+
+        pool.query(`INSERT INTO 
+        training (activitytype, date, time, title, distance, calories, timetaken, avghr, maxhr, athleteid, createdby) 
+        VALUES   (    $1,        $2,   $3,   $4,      $5,       $6,       $7,       $8,    $9,      $10,        $11) 
+        RETURNING *`, values)
+        .then((queryResult)=>{
+          res.send(queryResult.rows[0]);
+        })
+      });
+    })
+      
+      break;
+    
+    case 'fit':
+      
+      // reads the FIT file into memory
+      const inputFile = fs.readFileSync(filepath, null);
+      if (!inputFile || !inputFile.buffer) {
+          console.error('Ooops, could not read the inputFile or it does not exists, see details below');
+          console.error(JSON.stringify(filepath));
+          return;
+      }
+      const inputFileBuffer = inputFile.buffer;
+      // uses lib to read the FIT file
+      SportsLib.importFromFit(inputFileBuffer)
+        .then((event) => {
+            // convert to gpx
+            const gpxPromise = new EventExporterGPX().getAsString(event);
+            gpxPromise.then((gpxString) => {
+                // writes the gpx to file
+                fs.writeFileSync(outputGpxFilePath, gpxString, (wError) => {
+                    if (wError) {
+                        console.error('Ooops, something went wrong while saving the GPX file, see details below.');
+                        console.error(JSON.stringify(wError));
+                    }
+                });
+                // all done, celebrate!
+                console.log('Converted FIT file to GPX successfully!');
+                console.log('GPX file saved here: ' + outputGpxFilePath);
+            }).catch((cError) => {
+                console.error('Ooops, something went wrong while converting the FIT file, see details below');
+                console.error(JSON.stringify(cError));
+            });
+        })
+          .then((event) => {
+            fs.readFile(outputGpxFilePath, 'utf-8', (error, readFileResult)=>{
+              SportsLib.importFromGPX(readFileResult, DOMParser)
+              .then((importResult)=>{
+              // do Stuff with the file
+              // so much work just to get the calories
+                const jsondata = importResult.toJSON();
+                console.log(jsondata)
+                const values = [
+                  jsondata.stats['Activity Types'][0], // activitytype
+                  new Date(jsondata.startDate).toISOString().substr(0,10), // date
+                  new Date(jsondata.startDate).toISOString().substr(11,8), // time
+                  jsondata['name'], // title
+                  jsondata.stats.Distance / 1000, // distance
+                  jsondata.stats.Energy, // calories
+                  new Date(jsondata.stats.Duration * 1000).toISOString().substr(11,8), // timetaken
+                  jsondata.stats['Average Heart Rate'], // avghr
+                  jsondata.stats['Maximum Heart Rate'], // maxhr
+                  req.session.userid, // athleteid
+                  req.session.username, // createdby
+                ]
+
+                pool.query(`INSERT INTO 
+                training (activitytype, date, time, title, distance, calories, timetaken, avghr, maxhr, athleteid, createdby) 
+                VALUES   (    $1,        $2,   $3,   $4,      $5,       $6,       $7,       $8,    $9,      $10,        $11) 
+                RETURNING *`, values)
+                .then((queryResult)=>{
+                  res.send(queryResult.rows[0]);
+                })
+              });
+            })
+          })
+      
+      break;
+
+    case 'gpx':
+      fs.readFile(filepath, 'utf-8', (error, readFileResult)=>{
+      SportsLib.importFromGPX(readFileResult, DOMParser)
+      .then((importResult)=>{
+      // do Stuff with the file
+      // so much work just to get the calories
+        const jsondata = importResult.toJSON();
+        const values = [
+          jsondata.stats['Activity Types'][0], // activitytype
+          new Date(jsondata.startDate).toISOString().substr(0,10), // date
+          new Date(jsondata.startDate).toISOString().substr(11,8), // time
+          jsondata['name'], // title
+          jsondata.stats.Distance / 1000, // distance
+          jsondata.stats.Energy, // calories
+          new Date(jsondata.stats.Duration * 1000).toISOString().substr(11,8), // timetaken
+          jsondata.stats['Average Heart Rate'], // avghr
+          jsondata.stats['Maximum Heart Rate'], // maxhr
+          req.session.userid, // athleteid
+          req.session.username, // createdby
+        ]
+
+        pool.query(`INSERT INTO 
+        training (activitytype, date, time, title, distance, calories, timetaken, avghr, maxhr, athleteid, createdby) 
+        VALUES   (    $1,        $2,   $3,   $4,      $5,       $6,       $7,       $8,    $9,      $10,        $11) 
+        RETURNING *`, values)
+        .then((queryResult)=>{
+          res.send(queryResult.rows[0]);
+        })
+      });
+    })
+      
+      break;
+  
+    default: res.status().send(alert('Invaid file format'));
+      break;
+  }
 }
 
 const updateDB = (req, res)=> {
@@ -381,8 +500,9 @@ const updateDB = (req, res)=> {
 
 const addActivity = (req, res, next)=> {
   if(req.file){
-      next();
-      return;
+    console.log('File detected, uploading...')
+    next();
+    return;
 
   } else {
  
@@ -594,17 +714,32 @@ app.get('/coach/:index/overview', checkAuth, getCoachData, getAthleteData, getAt
 
 // User Story #: Coach should be able to see his list of athletes and see details about his athletes.
 // + he should be able to change different views
-app.get('/coach/:index/athletes', checkAuth, (req,res)=> {
-
+app.get('/coach/:index/trainingplans', checkAuth, getCoachData, getAthleteData, (req,res)=> {
   const {index} = req.params;
-  console.log(index);
+  pool.query(`SELECT * FROM training INNER JOIN relation ON training.athleteid = relation.athleteid WHERE relation.coachid = ${index}`)
+    .then((result)=> {
+      // Array: list all the trainings that are by athletes coached by this coach
+      const trainingdata = JSON.stringify(result.rows);
+      // extract unique athlete id
+      // sort
+      // const array1=[]
+      // for()
+      // [{athlete:[trainings]}, {athlete:[trainings]}, {athlete:[trainings]}]
+      const output = { 
+                      data: 
+                        {
+                          index: index,
+                          coachdata: res.locals.coachdata,
+                          athletedata: res.locals.athletedata,
+                          trainingdata: trainingdata,
+                          title: 'Overview'
+                        }
+                    }
 
-  pool.query(`SELECT * FROM training WHERE athleteid = ${index}`, (err,result)=> {
-    const output = { data: result.rows};
-    console.log('output >> ', output.data[0]);
-      res.render('schedule', output);
+      console.log(output);
+
+      res.render('trainingplan', output)
   })
-
 })
 
 // User Story #: Athlete should be see his training schedule, past, present, future, and be able to add activities
@@ -670,7 +805,7 @@ app.get('/logout', (req,res)=>{
 })
 
 app.get('/test', (req,res)=> {
-  res.render('test');
+  res.render('test2');
 }).post('/test', (req,res)=> {
   console.log(req.body)
 })

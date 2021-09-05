@@ -1,4 +1,4 @@
-<%- include('header', {index: `${data.index}`, title: `${data.title}`, username: data.username}) -%>
+<%- include('header-coach', {index: `${data.index}`, title: `${data.title}`, username: data.username}) -%>
 
 <script src="https://unpkg.com/ag-grid-enterprise/dist/ag-grid-enterprise.min.noStyle.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/ag-grid-community/dist/styles/ag-grid.css">
@@ -13,22 +13,19 @@
   <script type="text/javascript" charset="utf-8">
        // specify the columns
        const columnDefs = [
-          { field: "title"},
-          { field: "activitytype", 
-            rowGroup: true, 
-            cellRenderer: function(params) {
-                return '<a href="https://www.google.com" target="_blank">'+ params.value+'</a>'
-                //toggle modal
-                } 
-            },
-          { field: "date"},
-          { field: "time"},
-          { field: "distance" },
-          { field: "calories" },
-          { field: "timetaken" },
-          { field: "avghr" },
-          { field: "maxhr" },
-          { field: "createdon" }
+        { field: "username", rowGroup: true},
+        { field: "gender"},
+        { field: "birthdate"},
+        { field: "title"},
+        { field: "activitytype" },
+        { field: "date"},
+        { field: "time"},
+        { field: "distance" },
+        { field: "calories" },
+        { field: "timetaken" },
+        { field: "avghr" },
+        { field: "maxhr" },
+        { field: "createdon" }
        ];
        
        const autoGroupColumnDef = {
@@ -46,8 +43,6 @@
               sortable: true
           },
            columnDefs: columnDefs,
-           pagination: true,
-           onRowClicked: (ev)=> {console.log(ev.data)},
            autoGroupColumnDef: autoGroupColumnDef,
            groupSelectsChildren: true,
            rowSelection: 'multiple'
