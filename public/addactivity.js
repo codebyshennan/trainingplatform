@@ -62,7 +62,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
     return hours + ':' + minutes + ':' + seconds;
   }
 
-  
   const validateTime = (elem) => {
     console.log('Commencing time validation...')
     const durationarray = elem.split(':')
@@ -77,24 +76,28 @@ document.addEventListener('DOMContentLoaded', ()=>{
       }
   }
 
-  warmuptemplate.addEventListener('click', (ev)=>{
-    
+  warmuptemplate.addEventListener('click', (ev)=>{ 
     const injecthtml = async ()=> {
       templatecontainer.innerHTML +=
-        `<a href='#' class='list-group-item list-group-item-action'>
-      <div class='d-flex w-100 mb-1 justify-content-between'>
-        <h5 class='templateblockheader'>Warm-Up</h5>
-        <small class='templateremove'>Remove block</small></div>
-      <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-        <span class="col-2"><input type='text' class='templatetime' value="0:20:00" style='border:none;font-size:2rem;width:100px'></span>
-        <span class="col-1"><input type='text' class='templateminhr' value="60" style='border:none;font-size:2rem;width:50px'></span> 
-        <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-        <span class="col-1"><input type='text' class='templatemaxhr' value="80" style='border:none;font-size:2rem;width:50px'></span>
-        <span class="col-4"> 
-          <strong>% of Maximum Heart Rate</strong>
-          <p class='templatehr'>106-120bpm</p>
-        </span>
-    </a>`;}
+        `
+          <a href='#' class='list-group-item list-group-item-action'>
+            <div class='d-flex w-100 mb-1 justify-content-between'>
+              <h5 class='templateblockheader'>
+                Warm-Up
+              </h5>
+              <small class='templateremove'>Remove block</small></div>
+            <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
+              <span class="col-2"><input type='text' class='templatetime' value="0:20:00" style='border:none;font-size:2rem;width:100px'></span>
+              <span class="col-1"><input type='text' class='templateminhr' value="60" style='border:none;font-size:2rem;width:50px'></span> 
+              <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
+              <span class="col-1"><input type='text' class='templatemaxhr' value="80" style='border:none;font-size:2rem;width:50px'></span>
+              <span class="col-4"> 
+                <strong>% of Maximum Heart Rate</strong>
+                <p class='templatehr'>106-120bpm</p>
+              </span>
+          </a>
+        `
+    ;}
     
     injecthtml().then((val)=> {
       const templatetime = document.getElementsByClassName('templatetime');
@@ -105,26 +108,26 @@ document.addEventListener('DOMContentLoaded', ()=>{
       plannedtime.value = validateTime(toTimeStr(newtime));
       timetaken.innerText = plannedtime.value;
     })
-
   })
 
   activetemplate.addEventListener('click', (ev)=>{
-    
     const injecthtml = async ()=> {templatecontainer.innerHTML +=
-        `<a href='#' class='list-group-item list-group-item-action'>
-      <div class='d-flex w-100 mb-1 justify-content-between'>
-        <h5 class='templateblockheader'>Active</h5>
-        <small class='templateremove'>Remove block</small></div>
-      <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-        <span class="col-2"><input type='text' class='templatetime' value="0:10:00" style='border:none;font-size:2rem;width:100px'></span>
-        <span class="col-1"><input type='text' class='templateminhr' value="89" style='border:none;font-size:2rem;width:50px'></span> 
-        <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-        <span class="col-1"><input type='text' class='templatemaxhr' value="98" style='border:none;font-size:2rem;width:50px'></span>
-        <span class="col-4"> 
-          <strong>% of Maximum Heart Rate</strong>
-          <p class='templatehr'>157-172bpm</p>
-        </span>
-    </a>`;}
+        `
+        <a href='#' class='list-group-item list-group-item-action'>
+          <div class='d-flex w-100 mb-1 justify-content-between'>
+            <h5 class='templateblockheader'>Active</h5>
+            <small class='templateremove'>Remove block</small></div>
+          <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
+            <span class="col-2"><input type='text' class='templatetime' value="0:10:00" style='border:none;font-size:2rem;width:100px'></span>
+            <span class="col-1"><input type='text' class='templateminhr' value="89" style='border:none;font-size:2rem;width:50px'></span> 
+            <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
+            <span class="col-1"><input type='text' class='templatemaxhr' value="98" style='border:none;font-size:2rem;width:50px'></span>
+            <span class="col-4"> 
+              <strong>% of Maximum Heart Rate</strong>
+              <p class='templatehr'>157-172bpm</p>
+            </span>
+        </a>`
+        ;}
     
     injecthtml().then((val)=> {
       const templatetime = document.getElementsByClassName('templatetime');
@@ -139,22 +142,23 @@ document.addEventListener('DOMContentLoaded', ()=>{
   })
 
   recoverytemplate.addEventListener('click', (ev)=>{
-    
-    const injecthtml = async ()=> {templatecontainer.innerHTML +=
+    const injecthtml = async ()=> {
+      templatecontainer.innerHTML +=
         `<a href='#' class='list-group-item list-group-item-action'>
-      <div class='d-flex w-100 mb-1 justify-content-between'>
-        <h5 class='templateblockheader'>Recovery</h5>
-        <small class='templateremove'>Remove block</small></div>
-      <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-        <span class="col-2"><input type='text' class='templatetime' value="0:05:00" style='border:none;font-size:2rem;width:100px'></span>
-        <span class="col-1"><input type='text' class='templateminhr' value="50" style='border:none;font-size:2rem;width:50px'></span> 
-        <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-        <span class="col-1"><input type='text' class='templatemaxhr' value="60" style='border:none;font-size:2rem;width:50px'></span>
-        <span class="col-4"> 
-          <strong>% of Maximum Heart Rate</strong>
-          <p class='templatehr'>88-106bpm</p>
-        </span>
-    </a>`;}
+          <div class='d-flex w-100 mb-1 justify-content-between'>
+            <h5 class='templateblockheader'>Recovery</h5>
+            <small class='templateremove'>Remove block</small></div>
+          <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
+            <span class="col-2"><input type='text' class='templatetime' value="0:05:00" style='border:none;font-size:2rem;width:100px'></span>
+            <span class="col-1"><input type='text' class='templateminhr' value="50" style='border:none;font-size:2rem;width:50px'></span> 
+            <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
+            <span class="col-1"><input type='text' class='templatemaxhr' value="60" style='border:none;font-size:2rem;width:50px'></span>
+            <span class="col-4"> 
+              <strong>% of Maximum Heart Rate</strong>
+              <p class='templatehr'>88-106bpm</p>
+            </span>
+          </a>`
+        ;}
     
     injecthtml().then((val)=> {
       const templatetime = document.getElementsByClassName('templatetime');
@@ -165,26 +169,26 @@ document.addEventListener('DOMContentLoaded', ()=>{
       plannedtime.value = validateTime(toTimeStr(newtime));
       timetaken.innerText = plannedtime.value;
     })
-
   })
 
   cooldowntemplate.addEventListener('click', (ev)=>{
-    
-    const injecthtml = async ()=> {templatecontainer.innerHTML +=
+    const injecthtml = async ()=> {
+      templatecontainer.innerHTML +=
         `<a href='#' class='list-group-item list-group-item-action'>
-      <div class='d-flex w-100 mb-1 justify-content-between'>
-        <h5 class='templateblockheader'>Cool-down</h5>
-        <small class='templateremove'>Remove block</small></div>
-      <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-        <span class="col-2"><input type='text' class='templatetime' value="0:10:00" style='border:none;font-size:2rem;width:100px'></span>
-        <span class="col-1"><input type='text' class='templateminhr' value="40" style='border:none;font-size:2rem;width:50px'></span> 
-        <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-        <span class="col-1"><input type='text' class='templatemaxhr' value="50" style='border:none;font-size:2rem;width:50px'></span>
-        <span class="col-4"> 
-          <strong>% of Maximum Heart Rate</strong>
-          <p class='templatehr'>70-88bpm</p>
-        </span>
-    </a>`;}
+          <div class='d-flex w-100 mb-1 justify-content-between'>
+            <h5 class='templateblockheader'>Cool-down</h5>
+            <small class='templateremove'>Remove block</small></div>
+          <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
+            <span class="col-2"><input type='text' class='templatetime' value="0:10:00" style='border:none;font-size:2rem;width:100px'></span>
+            <span class="col-1"><input type='text' class='templateminhr' value="40" style='border:none;font-size:2rem;width:50px'></span> 
+            <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
+            <span class="col-1"><input type='text' class='templatemaxhr' value="50" style='border:none;font-size:2rem;width:50px'></span>
+            <span class="col-4"> 
+              <strong>% of Maximum Heart Rate</strong>
+              <p class='templatehr'>70-88bpm</p>
+            </span>
+        </a>`
+        ;}
     
     injecthtml().then((val)=> {
       const templatetime = document.getElementsByClassName('templatetime');
@@ -195,43 +199,49 @@ document.addEventListener('DOMContentLoaded', ()=>{
       plannedtime.value = validateTime(toTimeStr(newtime));
       timetaken.innerText = plannedtime.value;
     })
-
   })
 
   twosteptemplate.addEventListener('click', (ev)=>{
-    
-    const injecthtml = async ()=> {templatecontainer.innerHTML +=
-        `<div class='d-flex w-100 mb-1 justify-content-between'>Repeat 4 times</div>
+    const injecthtml = async ()=> {
+      templatecontainer.innerHTML +=
+        `<fieldset>
+            <div class='d-flex w-100 mb-1 justify-content-between'>
+              <legend class="col-form-label">Repeat 4 times</legend>
+            </div>
+            
+            <a href='#' class='list-group-item list-group-item-action'>
+              <div class='d-flex w-100 mb-1 justify-content-between'>
+                <h5 class='templateblockheader'>Hard</h5>
+                <small class='templateremove'>Remove block</small></div>
+              <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
+                <span class="col-2"><input type='text' class='templatetime' value="0:06:00" style='border:none;font-size:2rem;width:100px'></span>
+                <span class="col-1"><input type='text' class='templateminhr' value="85" style='border:none;font-size:2rem;width:50px'></span> 
+                <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
+                <span class="col-1"><input type='text' class='templatemaxhr' value="95" style='border:none;font-size:2rem;width:50px'></span>
+                <span class="col-4"> 
+                  <strong>% of Maximum Heart Rate</strong>
+                  <p class='templatehr'>150-167bpm</p>
+                </span>
+              </span>
+            </a>
         
-        <a href='#' class='list-group-item list-group-item-action'>
-      <div class='d-flex w-100 mb-1 justify-content-between'>
-        <h5 class='templateblockheader'>Hard</h5>
-        <small class='templateremove'>Remove block</small></div>
-      <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-        <span class="col-2"><input type='text' class='templatetime' value="0:06:00" style='border:none;font-size:2rem;width:100px'></span>
-        <span class="col-1"><input type='text' class='templateminhr' value="85" style='border:none;font-size:2rem;width:50px'></span> 
-        <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-        <span class="col-1"><input type='text' class='templatemaxhr' value="95" style='border:none;font-size:2rem;width:50px'></span>
-        <span class="col-4"> 
-          <strong>% of Maximum Heart Rate</strong>
-          <p class='templatehr'>150-167bpm</p>
-        </span>
-    </a>
-    
-    <a href='#' class='list-group-item list-group-item-action'>
-      <div class='d-flex w-100 mb-1 justify-content-between'>
-        <h5 class='templateblockheader'>Easy</h5>
-        <small class='templateremove'>Remove block</small></div>
-      <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-        <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
-        <span class="col-1"><input type='text' class='templateminhr' value="50" style='border:none;font-size:2rem;width:50px'></span> 
-        <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-        <span class="col-1"><input type='text' class='templatemaxhr' value="60" style='border:none;font-size:2rem;width:50px'></span>
-        <span class="col-4"> 
-          <strong>% of Maximum Heart Rate</strong>
-          <p class='templatehr'>88-106bpm</p>
-        </span>
-    </a>`;}
+          <a href='#' class='list-group-item list-group-item-action'>
+            <div class='d-flex w-100 mb-1 justify-content-between'>
+              <h5 class='templateblockheader'>Easy</h5>
+              <small class='templateremove'>Remove block</small></div>
+            <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
+              <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
+              <span class="col-1"><input type='text' class='templateminhr' value="50" style='border:none;font-size:2rem;width:50px'></span> 
+              <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
+              <span class="col-1"><input type='text' class='templatemaxhr' value="60" style='border:none;font-size:2rem;width:50px'></span>
+              <span class="col-4"> 
+                <strong>% of Maximum Heart Rate</strong>
+                <p class='templatehr'>88-106bpm</p>
+              </span>
+            </span>
+          </a>
+        </fieldset>`
+        ;}
     
     injecthtml().then((val)=> {
       const templatetime = document.getElementsByClassName('templatetime');
@@ -242,58 +252,68 @@ document.addEventListener('DOMContentLoaded', ()=>{
       plannedtime.value = validateTime(toTimeStr(newtime));
       timetaken.innerText = plannedtime.value;
     })
-
   })
 
   threesteptemplate.addEventListener('click', (ev)=>{
-    
     const injecthtml = async ()=> {templatecontainer.innerHTML +=
-        `<div class='d-flex w-100 mb-1 justify-content-between'>Repeat 3 times</div>
+        `
+          <fieldset>
+            <div class='d-flex w-100 mb-1 justify-content-between'>
+              <legend class="col-form-label">Repeat 3 times</legend>
+            </div>
         
-        <a href='#' class='list-group-item list-group-item-action'>
-      <div class='d-flex w-100 mb-1 justify-content-between'>
-        <h5 class='templateblockheader'>Hard</h5>
-        <small class='templateremove'>Remove block</small></div>
-      <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-        <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
-        <span class="col-1"><input type='text' class='templateminhr' value="75" style='border:none;font-size:2rem;width:50px'></span> 
-        <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-        <span class="col-1"><input type='text' class='templatemaxhr' value="85" style='border:none;font-size:2rem;width:50px'></span>
-        <span class="col-4"> 
-          <strong>% of Maximum Heart Rate</strong>
-          <p class='templatehr'>132-150bpm</p>
-        </span>
-    </a>
+            <a href='#' class='list-group-item list-group-item-action'>
+              <div class='d-flex w-100 mb-1 justify-content-between'>
+                <h5 class='templateblockheader'>Hard</h5>
+                <small class='templateremove'>Remove block</small>
+              </div>
+              <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
+                <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
+                <span class="col-1"><input type='text' class='templateminhr' value="75" style='border:none;font-size:2rem;width:50px'></span> 
+                <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
+                <span class="col-1"><input type='text' class='templatemaxhr' value="85" style='border:none;font-size:2rem;width:50px'></span>
+                <span class="col-4"> 
+                  <strong>% of Maximum Heart Rate</strong>
+                  <p class='templatehr'>132-150bpm</p>
+                </span>
+              </span>
+            </a>
 
-    <a href='#' class='list-group-item list-group-item-action'>
-      <div class='d-flex w-100 mb-1 justify-content-between'>
-        <h5 class='templateblockheader'>Harder</h5>
-        <small class='templateremove'>Remove block</small></div>
-      <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-        <span class="col-2"><input type='text' class='templatetime' value="0:01:00" style='border:none;font-size:2rem;width:100px'></span>
-        <span class="col-1"><input type='text' class='templateminhr' value="90" style='border:none;font-size:2rem;width:50px'></span> 
-        <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-        <span class="col-1"><input type='text' class='templatemaxhr' value="100" style='border:none;font-size:2rem;width:50px'></span>
-        <span class="col-4"> 
-          <strong>% of Maximum Heart Rate</strong>
-          <p class='templatehr'>158-176bpm</p>
-        </span>
-    </a>
-    
-    <a href='#' class='list-group-item list-group-item-action'>
-      <div class='d-flex w-100 mb-1 justify-content-between'>
-        <h5 class='templateblockheader'>Easy</h5>
-        <small class='templateremove'>Remove block</small></div>
-      <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-        <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
-        <span class="col-1"><input type='text' class='templateminhr' value="50" style='border:none;font-size:2rem;width:50px'></span> 
-        <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-        <span class="col-1"><input type='text' class='templatemaxhr' value="60" style='border:none;font-size:2rem;width:50px'></span>
-        <span class="col-4"> 
-          <strong>% of Maximum Heart Rate</strong>
-          <p class='templatehr'>88-106bpm</p>
-        </span>
-    </a>`;}
+            <a href='#' class='list-group-item list-group-item-action'>
+              <div class='d-flex w-100 mb-1 justify-content-between'>
+                <h5 class='templateblockheader'>Harder</h5>
+                <small class='templateremove'>Remove block</small>
+              </div>
+              <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
+                <span class="col-2"><input type='text' class='templatetime' value="0:01:00" style='border:none;font-size:2rem;width:100px'></span>
+                <span class="col-1"><input type='text' class='templateminhr' value="90" style='border:none;font-size:2rem;width:50px'></span> 
+                <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
+                <span class="col-1"><input type='text' class='templatemaxhr' value="100" style='border:none;font-size:2rem;width:50px'></span>
+                <span class="col-4"> 
+                  <strong>% of Maximum Heart Rate</strong>
+                  <p class='templatehr'>158-176bpm</p>
+                </span>
+              </span>
+            </a>
+          
+            <a href='#' class='list-group-item list-group-item-action'>
+              <div class='d-flex w-100 mb-1 justify-content-between'>
+                <h5 class='templateblockheader'>Easy</h5>
+                <small class='templateremove'>Remove block</small>
+              </div>
+              <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
+                <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
+                <span class="col-1"><input type='text' class='templateminhr' value="50" style='border:none;font-size:2rem;width:50px'></span> 
+                <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
+                <span class="col-1"><input type='text' class='templatemaxhr' value="60" style='border:none;font-size:2rem;width:50px'></span>
+                <span class="col-4"> 
+                  <strong>% of Maximum Heart Rate</strong>
+                  <p class='templatehr'>88-106bpm</p>
+                </span>
+              </span>
+            </a>
+          </fieldset>  `
+        ;}
     
     injecthtml().then((val)=> {
       const templatetime = document.getElementsByClassName('templatetime');
@@ -309,68 +329,78 @@ document.addEventListener('DOMContentLoaded', ()=>{
 
   rampuptemplate.addEventListener('click', (ev)=>{
     
-    const injecthtml = async ()=> {templatecontainer.innerHTML +=
-        `<div class='d-flex w-100 mb-1 justify-content-between'>Repeat 4 times</div>
+    const injecthtml = async ()=> {
+      templatecontainer.innerHTML +=
+        `<fieldset>
+          <div class='d-flex w-100 mb-1 justify-content-between'>
+            <legend class="col-form-label">Repeat 4 times<legend>
+          </div>
         
-        <a href='#' class='list-group-item list-group-item-action'>
-      <div class='d-flex w-100 mb-1 justify-content-between'>
-        <h5 class='templateblockheader'>Step 1</h5>
-        <small class='templateremove'>Remove block</small></div>
-      <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-        <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
-        <span class="col-1"><input type='text' class='templateminhr' value="55" style='border:none;font-size:2rem;width:50px'></span> 
-        <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-        <span class="col-1"><input type='text' class='templatemaxhr' value="65" style='border:none;font-size:2rem;width:50px'></span>
-        <span class="col-4"> 
-          <strong>% of Maximum Heart Rate</strong>
-          <p class='templatehr'>97-114bpm</p>
-        </span>
-    </a>
+          <a href='#' class='list-group-item list-group-item-action'>
+            <div class='d-flex w-100 mb-1 justify-content-between'>
+              <h5 class='templateblockheader'>Step 1</h5>
+              <small class='templateremove'>Remove block</small></div>
+              <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
+                <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
+                <span class="col-1"><input type='text' class='templateminhr' value="55" style='border:none;font-size:2rem;width:50px'></span> 
+                <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
+                <span class="col-1"><input type='text' class='templatemaxhr' value="65" style='border:none;font-size:2rem;width:50px'></span>
+                <span class="col-4"> 
+                <strong>% of Maximum Heart Rate</strong>
+                <p class='templatehr'>97-114bpm</p>
+              </span>
+            </span>
+          </a>
 
-    <a href='#' class='list-group-item list-group-item-action'>
-      <div class='d-flex w-100 mb-1 justify-content-between'>
-        <h5 class='templateblockheader'>Step 2</h5>
-        <small class='templateremove'>Remove block</small></div>
-      <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-        <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
-        <span class="col-1"><input type='text' class='templateminhr' value="75" style='border:none;font-size:2rem;width:50px'></span> 
-        <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-        <span class="col-1"><input type='text' class='templatemaxhr' value="85" style='border:none;font-size:2rem;width:50px'></span>
-        <span class="col-4"> 
-          <strong>% of Maximum Heart Rate</strong>
-          <p class='templatehr'>158-176bpm</p>
-        </span>
-    </a>
-    
-    <a href='#' class='list-group-item list-group-item-action'>
-      <div class='d-flex w-100 mb-1 justify-content-between'>
-        <h5 class='templateblockheader'>Step 3</h5>
-        <small class='templateremove'>Remove block</small></div>
-      <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-        <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
-        <span class="col-1"><input type='text' class='templateminhr' value="85" style='border:none;font-size:2rem;width:50px'></span> 
-        <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-        <span class="col-1"><input type='text' class='templatemaxhr' value="95" style='border:none;font-size:2rem;width:50px'></span>
-        <span class="col-4"> 
-          <strong>% of Maximum Heart Rate</strong>
-          <p class='templatehr'>150-167bpm</p>
-        </span>
-    </a>
-    
-    <a href='#' class='list-group-item list-group-item-action'>
-      <div class='d-flex w-100 mb-1 justify-content-between'>
-        <h5 class='templateblockheader'>Step 4</h5>
-        <small class='templateremove'>Remove block</small></div>
-      <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-        <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
-        <span class="col-1"><input type='text' class='templateminhr' value="50" style='border:none;font-size:2rem;width:50px'></span> 
-        <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-        <span class="col-1"><input type='text' class='templatemaxhr' value="60" style='border:none;font-size:2rem;width:50px'></span>
-        <span class="col-4"> 
-          <strong>% of Maximum Heart Rate</strong>
-          <p class='templatehr'>88-106bpm</p>
-        </span>
-    </a>`;}
+          <a href='#' class='list-group-item list-group-item-action'>
+            <div class='d-flex w-100 mb-1 justify-content-between'>
+              <h5 class='templateblockheader'>Step 2</h5>
+              <small class='templateremove'>Remove block</small></div>
+            <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
+              <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
+              <span class="col-1"><input type='text' class='templateminhr' value="75" style='border:none;font-size:2rem;width:50px'></span> 
+              <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
+              <span class="col-1"><input type='text' class='templatemaxhr' value="85" style='border:none;font-size:2rem;width:50px'></span>
+              <span class="col-4"> 
+                <strong>% of Maximum Heart Rate</strong>
+                <p class='templatehr'>158-176bpm</p>
+              </span>
+            </span>
+          </a>
+          
+          <a href='#' class='list-group-item list-group-item-action'>
+            <div class='d-flex w-100 mb-1 justify-content-between'>
+              <h5 class='templateblockheader'>Step 3</h5>
+              <small class='templateremove'>Remove block</small></div>
+            <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
+              <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
+              <span class="col-1"><input type='text' class='templateminhr' value="85" style='border:none;font-size:2rem;width:50px'></span> 
+              <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
+              <span class="col-1"><input type='text' class='templatemaxhr' value="95" style='border:none;font-size:2rem;width:50px'></span>
+              <span class="col-4"> 
+                <strong>% of Maximum Heart Rate</strong>
+                <p class='templatehr'>150-167bpm</p>
+              </span>
+            </span>
+          </a>
+          
+          <a href='#' class='list-group-item list-group-item-action'>
+            <div class='d-flex w-100 mb-1 justify-content-between'>
+              <h5 class='templateblockheader'>Step 4</h5>
+              <small class='templateremove'>Remove block</small></div>
+            <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
+              <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
+              <span class="col-1"><input type='text' class='templateminhr' value="50" style='border:none;font-size:2rem;width:50px'></span> 
+              <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
+              <span class="col-1"><input type='text' class='templatemaxhr' value="60" style='border:none;font-size:2rem;width:50px'></span>
+              <span class="col-4"> 
+                <strong>% of Maximum Heart Rate</strong>
+                <p class='templatehr'>88-106bpm</p>
+              </span>
+            </span>
+          </a>
+        </fieldset>`
+    ;}
     
     injecthtml().then((val)=> {
       const templatetime = document.getElementsByClassName('templatetime');
@@ -381,73 +411,82 @@ document.addEventListener('DOMContentLoaded', ()=>{
       plannedtime.value = validateTime(toTimeStr(newtime));
       timetaken.innerText = plannedtime.value;
     })
-
   })
 
   rampdowntemplate.addEventListener('click', (ev)=>{
     
-    const injecthtml = async ()=> {templatecontainer.innerHTML +=
-        `<div class='d-flex w-100 mb-1 justify-content-between'>Repeat 4 times</div>
+    const injecthtml = async ()=> {
+      templatecontainer.innerHTML +=
+        `<fieldset>
+          <div class='d-flex w-100 mb-1 justify-content-between'>
+            <legend>Repeat 4 times</legend>
+          </div>
         
-        <a href='#' class='list-group-item list-group-item-action'>
-      <div class='d-flex w-100 mb-1 justify-content-between'>
-        <h5 class='templateblockheader'>Step 1</h5>
-        <small class='templateremove'>Remove block</small></div>
-      <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-        <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
-        <span class="col-1"><input type='text' class='templateminhr' value="55" style='border:none;font-size:2rem;width:50px'></span> 
-        <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-        <span class="col-1"><input type='text' class='templatemaxhr' value="65" style='border:none;font-size:2rem;width:50px'></span>
-        <span class="col-4"> 
-          <strong>% of Maximum Heart Rate</strong>
-          <p class='templatehr'>97-114bpm</p>
-        </span>
-    </a>
+          <a href='#' class='list-group-item list-group-item-action'>
+            <div class='d-flex w-100 mb-1 justify-content-between'>
+              <h5 class='templateblockheader'>Step 1</h5>
+              <small class='templateremove'>Remove block</small></div>
+            <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
+              <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
+              <span class="col-1"><input type='text' class='templateminhr' value="55" style='border:none;font-size:2rem;width:50px'></span> 
+              <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
+              <span class="col-1"><input type='text' class='templatemaxhr' value="65" style='border:none;font-size:2rem;width:50px'></span>
+              <span class="col-4"> 
+                <strong>% of Maximum Heart Rate</strong>
+                <p class='templatehr'>97-114bpm</p>
+              </span>
+            </span>
+          </a>
 
-    <a href='#' class='list-group-item list-group-item-action'>
-      <div class='d-flex w-100 mb-1 justify-content-between'>
-        <h5 class='templateblockheader'>Step 2</h5>
-        <small class='templateremove'>Remove block</small></div>
-      <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-        <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
-        <span class="col-1"><input type='text' class='templateminhr' value="75" style='border:none;font-size:2rem;width:50px'></span> 
-        <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-        <span class="col-1"><input type='text' class='templatemaxhr' value="85" style='border:none;font-size:2rem;width:50px'></span>
-        <span class="col-4"> 
-          <strong>% of Maximum Heart Rate</strong>
-          <p class='templatehr'>158-176bpm</p>
-        </span>
-    </a>
+          <a href='#' class='list-group-item list-group-item-action'>
+            <div class='d-flex w-100 mb-1 justify-content-between'>
+              <h5 class='templateblockheader'>Step 2</h5>
+              <small class='templateremove'>Remove block</small></div>
+            <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
+              <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
+              <span class="col-1"><input type='text' class='templateminhr' value="75" style='border:none;font-size:2rem;width:50px'></span> 
+              <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
+              <span class="col-1"><input type='text' class='templatemaxhr' value="85" style='border:none;font-size:2rem;width:50px'></span>
+              <span class="col-4"> 
+                <strong>% of Maximum Heart Rate</strong>
+                <p class='templatehr'>158-176bpm</p>
+              </span>
+            </span>
+          </a>
     
-    <a href='#' class='list-group-item list-group-item-action'>
-      <div class='d-flex w-100 mb-1 justify-content-between'>
-        <h5 class='templateblockheader'>Step 3</h5>
-        <small class='templateremove'>Remove block</small></div>
-      <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-        <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
-        <span class="col-1"><input type='text' class='templateminhr' value="85" style='border:none;font-size:2rem;width:50px'></span> 
-        <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-        <span class="col-1"><input type='text' class='templatemaxhr' value="95" style='border:none;font-size:2rem;width:50px'></span>
-        <span class="col-4"> 
-          <strong>% of Maximum Heart Rate</strong>
-          <p class='templatehr'>150-167bpm</p>
-        </span>
-    </a>
+          <a href='#' class='list-group-item list-group-item-action'>
+            <div class='d-flex w-100 mb-1 justify-content-between'>
+              <h5 class='templateblockheader'>Step 3</h5>
+              <small class='templateremove'>Remove block</small></div>
+            <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
+              <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
+              <span class="col-1"><input type='text' class='templateminhr' value="85" style='border:none;font-size:2rem;width:50px'></span> 
+              <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
+              <span class="col-1"><input type='text' class='templatemaxhr' value="95" style='border:none;font-size:2rem;width:50px'></span>
+              <span class="col-4"> 
+                <strong>% of Maximum Heart Rate</strong>
+                <p class='templatehr'>150-167bpm</p>
+              </span>
+            </span>
+          </a>
     
-    <a href='#' class='list-group-item list-group-item-action'>
-      <div class='d-flex w-100 mb-1 justify-content-between'>
-        <h5 class='templateblockheader'>Step 4</h5>
-        <small class='templateremove'>Remove block</small></div>
-      <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-        <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
-        <span class="col-1"><input type='text' class='templateminhr' value="50" style='border:none;font-size:2rem;width:50px'></span> 
-        <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-        <span class="col-1"><input type='text' class='templatemaxhr' value="60" style='border:none;font-size:2rem;width:50px'></span>
-        <span class="col-4"> 
-          <strong>% of Maximum Heart Rate</strong>
-          <p class='templatehr'>88-106bpm</p>
-        </span>
-    </a>`;}
+          <a href='#' class='list-group-item list-group-item-action'>
+            <div class='d-flex w-100 mb-1 justify-content-between'>
+              <h5 class='templateblockheader'>Step 4</h5>
+              <small class='templateremove'>Remove block</small></div>
+            <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
+              <span class="col-2"><input type='text' class='templatetime' value="0:03:00" style='border:none;font-size:2rem;width:100px'></span>
+              <span class="col-1"><input type='text' class='templateminhr' value="50" style='border:none;font-size:2rem;width:50px'></span> 
+              <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
+              <span class="col-1"><input type='text' class='templatemaxhr' value="60" style='border:none;font-size:2rem;width:50px'></span>
+              <span class="col-4"> 
+                <strong>% of Maximum Heart Rate</strong>
+                <p class='templatehr'>88-106bpm</p>
+              </span>
+            </span>
+          </a>
+        </fieldset>`  
+          ;}
     
     injecthtml().then((val)=> {
       const templatetime = document.getElementsByClassName('templatetime');
@@ -458,7 +497,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
       plannedtime.value = validateTime(toTimeStr(newtime));
       timetaken.innerText = plannedtime.value;
     })
-
   })
   
 

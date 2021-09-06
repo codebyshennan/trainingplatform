@@ -508,7 +508,7 @@ app.get('/athlete/:index/schedule', checkAuth, (req,res)=> {
  */
 
 const extractInfo = (req,res,next) => {
-
+  const {index} = req.params
   // TODO: detect filetype and parse accordingly
   const extension = req.file.originalname.substr(req.file.originalname.length-3,3)
   console.log(extension)
@@ -548,7 +548,7 @@ const extractInfo = (req,res,next) => {
         VALUES   ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) 
         RETURNING *`, values)
         .then((queryResult)=>{
-          res.redirect('schedule');
+          res.redirect(`/athlete/${index}/schedule`);
         })
       });
     })
@@ -617,7 +617,7 @@ const extractInfo = (req,res,next) => {
         VALUES   ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) 
         RETURNING *`, values)
                 .then((queryResult)=>{
-                  res.redirect('schedule');
+                  res.redirect(`/athlete/${index}/schedule`);
                 })
               });
             })
@@ -656,14 +656,14 @@ const extractInfo = (req,res,next) => {
         VALUES   ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) 
         RETURNING *`, values)
         .then((queryResult)=>{
-          res.redirect('schedule');
+          res.redirect(`/athlete/${index}/schedule`);
         })
       });
     })
       
       break;
   
-    default: res.status().send(alert('Invaid file format'));
+    default: res.send(alert('Invaid file format'));
       break;
   }
 }
@@ -717,14 +717,17 @@ const addActivity = (req, res, next)=> {
 const getCoach = (req,res,next) => {
   const {index} = req.params;
   pool.query(`SELECT coachid FROM relation WHERE athleteid = ${index}`)
-  .then(result => {
-    pool.query(`SELECT * FROM coach WHERE coachid = ${result.rows[0].id}`)
-  }).then(result => {
-    res.locals.coachname = result.rows[0].username;
-    next();
-  })
+  .then(queryrelationResult => {
+    console.log('result.rows >> ', queryrelationResult.rows[0].coachid)
+    pool.query(`SELECT * FROM coach WHERE id = '${queryrelationResult.rows[0].coachid}'`)
+    .then(querycoachResult => {
+      console.log('result.rows >> ', querycoachResult)
+      res.locals.coachname = querycoachResult.rows[0].username;
+      next();
+    })
 
   next();
+  })
 }
 
 
@@ -738,7 +741,7 @@ app.post('/athlete/:index/schedule', (req,res)=> {
 
 
 
-
+ 
 // User Story #: Athlete should be able to set and customise his profile to suit his tastes. He should be able to upload a photo that persists on his page.
 // athlete settings
 app.get('/athlete/:index/settings', checkAuth, (req,res)=> {
@@ -867,7 +870,7 @@ const getCoachData = (req,res,next) => {
   const {index} = req.params;
   pool.query(`SELECT fname, lname FROM coach WHERE id = ${index}`)
   .then((result)=> {
-    res.locals.coachdata = JSON.stringify(result.rows);
+    res.locals.coachdata = result.rows;
     next();
     }
   )
@@ -1072,7 +1075,7 @@ app.get('/coach/:index/overview', checkAuth, getCoachData, getAthleteData, getAt
 
 // User Story #: Coach should be able to see his list of athletes and see details about his athletes.
 // + he should be able to change different views
-app.get('/coach/:index/trainingplans', checkAuth, getCoachData, getAthleteData, (req,res)=> {
+app.get('/coach/:index/trainingplans', checkAuth, getCoachData, getAthleteData, getAthleteTrainingInfo,(req,res)=> {
   const {index} = req.params;
   pool.query(`SELECT * FROM training INNER JOIN relation ON training.athleteid = relation.athleteid INNER JOIN athlete ON training.athleteid = athlete.id WHERE relation.coachid = ${index} `)
     .then((result)=> {
@@ -1088,7 +1091,7 @@ app.get('/coach/:index/trainingplans', checkAuth, getCoachData, getAthleteData, 
                         }
                     }
 
-      console.log(output);
+      
 
       res.render('trainingplan', output)
   })
@@ -1096,7 +1099,7 @@ app.get('/coach/:index/trainingplans', checkAuth, getCoachData, getAthleteData, 
 
 // User Story #: Athlete should be see his training schedule, past, present, future, and be able to add activities
 // athlete schedule
-app.get('/coach/:index/timetable', checkAuth, getFormLabels, (req,res)=> {
+app.get('/coach/:index/timetable', checkAuth, getCoachData, getAthleteData, getAthleteTrainingInfo,(req,res)=> {
 const {index} = req.params;
   pool.query(`SELECT * FROM training INNER JOIN relation ON training.athleteid = relation.athleteid INNER JOIN athlete ON training.athleteid = athlete.id WHERE relation.coachid = ${index} `)
     .then((result)=> {
@@ -1112,6 +1115,7 @@ const {index} = req.params;
                         }
                     }
 
+      console.log('timetable output >> ', output.data.athletedata)
 
       res.render('timetable', output);
   })
@@ -1123,6 +1127,29 @@ app.post('/coach/:index/schedule', (req,res)=> {
   console.log(req.body);
   const {id, date} = req.body;
   pool.query(`UPDATE training SET date = '${date}' WHERE id = ${id} RETURNING *`).then((response)=> res.status(200).send(response));
+})
+
+
+app.get('/coach/:index/athlete/:athleteid/timetable', checkAuth, getCoachData, getAthleteData, getAthleteTrainingInfo,(req,res)=> {
+  const {index, athleteid} = req.params;
+  pool.query(`SELECT * FROM training INNER JOIN relation ON training.athleteid = relation.athleteid WHERE relation.coachid = ${index} AND training.athleteid = ${athleteid}`, (err,data)=> {
+    const trainingdata = data.rows;
+    const output = { 
+                      data: 
+                        {
+                          index: index,
+                          athleteid: athleteid,
+                          coachdata: res.locals.coachdata,
+                          athletedata: res.locals.athletedata,
+                          trainingdata: trainingdata,
+                          title: `Athlete ${athleteid} | Training Plans`
+                        }
+                    }
+
+      console.log('timetable output >> ', output)
+
+      res.render('timetable', output); 
+  })
 })
 
 // TODO: collision prevention
