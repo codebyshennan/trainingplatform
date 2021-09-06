@@ -38,49 +38,61 @@
 
           <div class="stats">
             <div>
-              <strong>ACTIVITIES<br />ALL TIME</strong> 3098
+              <strong>ACTIVITIES<br />ALL TIME</strong> <%=
+              athlete.alltimeactivity %>
             </div>
 
             <div>
-              <strong>DURATION<br />ALL TIME</strong> 562
+              <strong>DURATION<br />ALL TIME</strong> <%=
+              (athlete.alltimeduration/60/60).toFixed(2) %>hrs
             </div>
 
             <div>
-              <strong>DISTANCE<br />ALL TIME</strong>
-            </div>
-          </div>
-
-          <div class="stats">
-            <div>
-              <strong>ACTIVITIES<br />THIS MONTH</strong> 3098
-            </div>
-
-            <div>
-              <strong>DURATION<br />THIS MONTH</strong> 562
-            </div>
-
-            <div>
-              <strong>DISTANCE<br />THIS MONTH</strong>
+              <strong>DISTANCE<br />ALL TIME</strong> <%=
+              athlete.alltimedistance.toFixed(2) %>km
             </div>
           </div>
 
           <div class="stats">
             <div>
-              <strong>CALORIES <br />BURNT</strong> 3098
+              <strong>ACTIVITIES<br />THIS MONTH</strong> <%=
+              athlete.thismonthactivity%>
             </div>
 
             <div>
-              <strong>AVERAGE<br />HEARTRATE</strong> 562
+              <strong>DURATION<br />THIS MONTH</strong> <%=
+              (athlete.thismonthduration/60/60).toFixed(2) %>hrs
             </div>
 
             <div>
-              <strong>MAX<br />HEARTRATE</strong> 182
+              <strong>DISTANCE<br />THIS MONTH</strong> <%=
+              athlete.thismonthdistance %>km
+            </div>
+          </div>
+
+          <div class="stats">
+            <div>
+              <strong>CALORIES <br />BURNT</strong> <%= athlete.alltimecalories
+              %>kCal
+            </div>
+
+            <div>
+              <strong>AVERAGE<br />HEARTRATE</strong> <%=
+              athlete.alltimeavghr.toFixed(2) %>bpm
+            </div>
+
+            <div>
+              <strong>AVERAGE<br />PACE</strong> <%= athlete.alltimeavgpace
+              %>km/h
             </div>
           </div>
 
           <div class="footer">
-            <a href="#" class="Cbtn Cbtn-primary">View</a>
-            <a href="#" class="Cbtn Cbtn-danger">Delete</a>
+            <a
+              href="athlete/<%= athlete.id %>/timetable "
+              class="Cbtn Cbtn-primary"
+              >View</a
+            >
           </div>
         </div>
       </div>

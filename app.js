@@ -878,7 +878,7 @@ const getAthleteData = (req,res,next) => {
   const {index} = req.params;
   pool.query(`SELECT * FROM athlete INNER JOIN relation ON athlete.id = relation.athleteid WHERE relation.coachid = ${index}`)
   .then((result)=> {
-    const athletedata = JSON.stringify(result.rows);
+    const athletedata = result.rows;
     res.locals.athletedata = athletedata;
     next();
   })
@@ -890,32 +890,182 @@ const getAthleteTrainingInfo = (req,res,next) => {
 
   pool.query(`SELECT * FROM training INNER JOIN relation ON training.athleteid = relation.athleteid WHERE relation.coachid = ${index}`)
     .then((result)=> {
-      // Array: list all the trainings that are by athletes coached by this coach
-      const trainingdata = JSON.stringify(result.rows);
-      // extract unique athlete id
-      // sort
-      // const array1=[]
-      // for()
-      // [{athlete:[trainings]}, {athlete:[trainings]}, {athlete:[trainings]}]
-      const output = { 
-                      data: 
+
+      const onlyUnique = (value,index,self) => {
+      return self.indexOf(value) === index;
+      }
+    
+      const uniqueathleteid = result.rows.map(data => data.athleteid).filter(onlyUnique);
+      console.log(uniqueathleteid)
+
+      let atharray= []
+
+      for(const ath in uniqueathleteid) {
+        const fname = res.locals.athletedata[ath].fname;
+        const lname = res.locals.athletedata[ath].lname;
+        const selectathlete = uniqueathleteid[ath]
+        console.log('Compiling ath >> ', ath)
+        const athspecificdata = result.rows.filter(data => data.athleteid === selectathlete);
+        console.log('athspecificdata >> ', athspecificdata)
+        const thismonthdata = athspecificdata.filter(data => new Date(data.datetime).getMonth() === new Date().getMonth() && new Date(data.datetime).getFullYear() === new Date().getFullYear())
+
+
+        const toChartArray = (tally) => {
+          let chartarray = []
+          for(const type in tally) {
+            chartarray.push({'x':type, 'y':tally[type]});
+          }
+          return chartarray;
+        }
+
+        const typetally = (type, data) => {
+          let activitytally = {}
+          for(let x=0; x < data.length; x++) {
+            let activity = data[x].activitytype
+            if (activity in activitytally) {
+              activitytally[activity] += Number(data[x][type])
+            } else {
+              activitytally[activity] = 0;
+            }
+          }
+
+        
+        return activitytally;
+      }
+
+      const activitytypetally = (data) => {
+        let activitytally = {}
+        for(let x=0; x < data.length; x++) {
+          let activity = data[x].activitytype
+          if (activity in activitytally) {
+            activitytally[activity] += 1;
+          } else {
+            activitytally[activity] = 0;
+          }
+        }
+
+        let chartarray = []
+        for(const type in activitytally) {
+          chartarray.push({'x':type, 'y':activitytally[type]});
+        }
+
+        return activitytally;
+      }
+      
+      const distancereducer = (accumulator, currentvalue) => (Number(accumulator) || 0 ) + Number(currentvalue.distance) 
+      const caloriereducer = (accumulator, currentvalue) => (Number(accumulator) || 0 ) + Number(currentvalue.calories)
+      const hrreducer = (accumulator, currentvalue) => (Number(accumulator) || 0 ) + Number(currentvalue.avghr)
+      const pacereducer = (accumulator, currentvalue) => (Number(accumulator) || 0 ) + Number(currentvalue.avgpace)
+      const durationreducer = (accumulator, currentvalue) => (Number(accumulator) || 0 ) + Number(gettime(currentvalue.timetaken))
+      
+      //all time data
+      const alltimedistance = athspecificdata.reduce(distancereducer,0);
+      const alltimecalories = athspecificdata.reduce(caloriereducer,0);
+      const alltimeavghr = athspecificdata.reduce(hrreducer,0) / athspecificdata.length;
+      const alltimeduration = athspecificdata.reduce(durationreducer,0);
+      const alltimeavgpace = athspecificdata.reduce(pacereducer,0);
+
+      //data this month
+      const thismonthcalories = thismonthdata.reduce(caloriereducer,0);
+      const thismonthdistance = thismonthdata.reduce(distancereducer,0);
+      const thismonthduration = thismonthdata.reduce(durationreducer,0);
+      const thismonthavghr = thismonthdata.reduce(hrreducer,0) / thismonthdata.length;
+      const thismonthavgpace = thismonthdata.reduce(pacereducer,0) / thismonthdata.length; 
+
+      const timetally = (data) => {
+        let activitytally = {}
+        for(let x=0; x < data.length; x++) {
+          let activity = data[x].activitytype
+          if (activity in activitytally) {
+            activitytally[activity] += gettime(data[x]['timetaken'])
+          } else {
+            activitytally[activity] = 0;
+          }
+        }
+
+        return activitytally;
+      }
+
+      //segment by sports
+      const caloriebysport = typetally('calories', result.rows);
+      const distancebysport = typetally('distance', result.rows);
+      const durationbysport = timetally(result.rows);
+      const combinedhrbysport = typetally('avghr', result.rows);
+
+      const chartcalorie = toChartArray(caloriebysport)
+      const chartdistance = toChartArray(distancebysport)
+      const chartduration = toChartArray(durationbysport)
+      
+
+      const avghrbysport = (()=> {
+                            Object.keys(combinedhrbysport).forEach( sport => {
+                            combinedhrbysport[sport] /= activitytypetally(result.rows)[sport]
+                            })
+                            return combinedhrbysport;
+                          })();
+
+                                
+      const combinedpacebysport = typetally('avgpace', result.rows);
+      const avgpacebysport = (()=> {
+                              Object.keys(combinedpacebysport).forEach(sport => {
+                              combinedpacebysport[sport] /= activitytypetally(result.rows)[sport]
+                              })
+                              return combinedpacebysport;
+                            })();
+
+      const chartavgpace = toChartArray(avgpacebysport)
+      const chartavghr = toChartArray(avghrbysport)
+
+      const athdata = {
+                      id: uniqueathleteid[ath],
+                      fname: fname,
+                      lname: lname,
+                      alltimeactivity: athspecificdata.length,
+                      thismonthactivity: thismonthdata.length,
+                      alltimedistance: alltimedistance,
+                      alltimecalories: alltimecalories,
+                      alltimeavghr: alltimeavghr,
+                      alltimeduration: alltimeduration,
+                      alltimeavgpace: alltimeavgpace,
+                      thismonthcalories: thismonthcalories,
+                      thismonthdistance: thismonthdistance,
+                      thismonthduration: thismonthduration,
+                      thismonthavghr: thismonthavghr,
+                      thismonthavgpace: thismonthavgpace,
+                      caloriebysport: chartcalorie,
+                      distancebysport: chartdistance,
+                      durationbysport: chartduration,
+                      avghrbysport: chartavghr,
+                      avgpacebysport: chartavgpace,
+                      activitytypetally: toChartArray(activitytypetally(result.rows)),
+                      }
+      
+      atharray.push(athdata);
+      }
+      
+      console.log(atharray);
+      const output = { data: 
                         {
                           index: index,
+                          username: req.session.username, 
+                          title: "Overview",
+                          athleteinfo: res.locals.athletedata,
+                          athleteids: uniqueathleteid,
                           coachdata: res.locals.coachdata,
-                          athletedata: res.locals.athletedata,
-                          trainingdata: trainingdata,
-                          title: 'Overview'
+                          athletedata: JSON.stringify(atharray),
                         }
-                    }
+                      };
+        
+        res.locals.output = output;
+        next();
 
-      console.log(output);
-
-      res.render('overview', output)
   })
 }
 
 // User Story #: 
-app.get('/coach/:index/overview', checkAuth, getCoachData, getAthleteData, getAthleteTrainingInfo);
+app.get('/coach/:index/overview', checkAuth, getCoachData, getAthleteData, getAthleteTrainingInfo, (req,res)=>{
+    res.render('overview', res.locals.output);
+});
 
 // TODO: User Story #: Coach should have his own Todo List
 
@@ -924,15 +1074,9 @@ app.get('/coach/:index/overview', checkAuth, getCoachData, getAthleteData, getAt
 // + he should be able to change different views
 app.get('/coach/:index/trainingplans', checkAuth, getCoachData, getAthleteData, (req,res)=> {
   const {index} = req.params;
-  pool.query(`SELECT * FROM training INNER JOIN relation ON training.athleteid = relation.athleteid WHERE relation.coachid = ${index}`)
+  pool.query(`SELECT * FROM training INNER JOIN relation ON training.athleteid = relation.athleteid INNER JOIN athlete ON training.athleteid = athlete.id WHERE relation.coachid = ${index} `)
     .then((result)=> {
-      // Array: list all the trainings that are by athletes coached by this coach
-      const trainingdata = JSON.stringify(result.rows);
-      // extract unique athlete id
-      // sort
-      // const array1=[]
-      // for()
-      // [{athlete:[trainings]}, {athlete:[trainings]}, {athlete:[trainings]}]
+      const trainingdata = result.rows;
       const output = { 
                       data: 
                         {
@@ -940,7 +1084,7 @@ app.get('/coach/:index/trainingplans', checkAuth, getCoachData, getAthleteData, 
                           coachdata: res.locals.coachdata,
                           athletedata: res.locals.athletedata,
                           trainingdata: trainingdata,
-                          title: 'Overview'
+                          title: 'Training Plans'
                         }
                     }
 
@@ -953,22 +1097,22 @@ app.get('/coach/:index/trainingplans', checkAuth, getCoachData, getAthleteData, 
 // User Story #: Athlete should be see his training schedule, past, present, future, and be able to add activities
 // athlete schedule
 app.get('/coach/:index/timetable', checkAuth, getFormLabels, (req,res)=> {
-
-  const {index} = req.params;
-  console.log(index);
-
-  pool.query(`SELECT * FROM training INNER JOIN relation ON training.athleteid = relation.athleteid WHERE coachid = ${index}`, (err,result)=> {
-
-        const output = {data: 
+const {index} = req.params;
+  pool.query(`SELECT * FROM training INNER JOIN relation ON training.athleteid = relation.athleteid INNER JOIN athlete ON training.athleteid = athlete.id WHERE relation.coachid = ${index} `)
+    .then((result)=> {
+      const trainingdata = result.rows;
+      const output = { 
+                      data: 
                         {
                           index: index,
-                          columnnames: res.locals.columns,
-                          data: JSON.stringify(result.rows),
-                          title: "Timetable"
+                          coachdata: res.locals.coachdata,
+                          athletedata: res.locals.athletedata,
+                          trainingdata: trainingdata,
+                          title: 'Training Plans'
                         }
-                      };
+                    }
 
-                      console.log(output)
+
       res.render('timetable', output);
   })
 })

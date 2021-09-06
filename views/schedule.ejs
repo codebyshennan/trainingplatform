@@ -158,6 +158,7 @@
             minhr : "<%= event.minhr %>",
             avghr : "<%= event.avghr %>",
             maxhr : "<%= event.maxhr %>",
+            feeling: "<%= event.feeling %>",
             createdon : "<%=event.createdon%>",
             createdby: "<%=event.createdby%>"
           }
@@ -177,11 +178,32 @@
         modalTitle.innerText = info.event.title;
 
         const modalBody = document.getElementById('infoModalBody');
-        activitylist.value = info.event.extendedProps.activitytype;
+        infoactivitylist.value = info.event.extendedProps.activitytype;
+        toggleImg(infoactivitylist.value);
 
-        infoperceivedexertion
+        infoperceivedexertion.value = info.event.extendedProps.perceivedexertion;
 
+        infodatecontainer.value = info.event.start;
 
+        infofeelingvalue.value = info.event.extendedProps.feeling
+        infoavgpace.value = info.event.extendedProps.avgpace
+        infoavghr.value = info.event.extendedProps.avghr
+
+        infominpace.value = info.event.extendedProps.minpace
+        infomaxpace.value = info.event.extendedProps.maxpace
+        
+        infominhr.value = info.event.extendedProps.minhr
+        infomaxhr.value = info.event.extendedProps.maxhr
+
+        infoactualdistance.value = info.event.extendedProps.distance;
+
+        infoactualtimetaken.value = info.event.extendedProps.timetaken;
+
+        infoactualcalories.value = info.event.extendedProps.calories;
+
+        infodescription.value = info.event.extendedProps.description;
+
+        infoModalTitle.value = info.event.title;
 
 
 
@@ -197,7 +219,7 @@
         var newModal = new bootstrap.Modal(document.getElementById('makeNewModal'));
         resetFields();
         datecontainer.value = info.startStr;
-        startdate.placeholder = info.start.toString().substr(0,15)
+        startdate.placeholder = new Date(info.start).toString().substr(0,15)
         newModal.toggle();
       },
       eventDrop: (info) => {
@@ -588,7 +610,7 @@
 <div class="modal-dialog modal-custom-viewactivity modal-dialog-centered modal-dialog-scrollable">
   <div class="modal-content">
     <div class="modal-header">
-      <h4 class="modal-title" id="infoModalTitle"> </h4>
+      <h4 class="modal-title" id="infoModalTitle"></h4>
       <button type="button" class="close" data-bs-dismiss="modal">
           <span aria-hidden="true">×</span>
           <span class="sr-only">close</span>
@@ -596,7 +618,7 @@
     </div>
 
     <div class="modal-body" id="infoModalBody">      
-      <form action="/test" method="POST" enctype="multipart/form-data">
+      <form action="schedule/editactivity" method="POST" enctype="multipart/form-data" id="infotrainingform">
         <div class="row justify-content-start p-3" id="infostartparams">
           <div class="col-2">
             <input type="text" id="infostartdate"
@@ -621,7 +643,7 @@
           <div class="col" >
             <div class="row" id = "infoworkoutdetails">
               <div class="col p-3 m-3" id="infoworkoutcard" style="border-radius:8px"> 
-                <input type="text" name="title" value="Untitled Workout" style="border: none; width: 100%; margin-left:10px">
+                <input type="text" name="title"  id="infotitle" value="Untitled Workout" style="border: none; width: 100%; margin-left:10px">
                 <div class="row justify-content-center align-items-center" style="height: 100px">
                   <div class="col-2 " id="infoactivitytype">
                     Select Activity
@@ -664,7 +686,7 @@
         <div class="container-fluid">
           <div class="row m-3">
           <!-- planned/completed -->
-            <div class="col-6">
+            <div class="col">
               <div class="row">
 
                 <!-- split between form entry and workout editor -->
@@ -850,21 +872,13 @@
 
               </div>
             </div>
-            <div class="col-6" id="infoeditorcontainer">
-              <div class="list-group" id="infoworkouteditor">
-                Workout Editor
-                <hr>
-
-
-            </div>
-            </div>
           </div>
-          <input type="submit" value="submit">
         </div>
       </form> 
     </div>
     <div class="modal-footer">
       <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      <button type="submit" form="infotrainingform" class="btn btn-primary" value="submit">Save changes</button>
     </div>
   </div>
 </div>

@@ -21,14 +21,21 @@
                 //toggle modal
                 } 
             },
-          { field: "date"},
-          { field: "time"},
-          { field: "distance" },
-          { field: "calories" },
-          { field: "timetaken" },
-          { field: "avghr" },
-          { field: "maxhr" },
-          { field: "createdon" }
+          { field: "description"},
+        { field: "perceivedexertion"},
+        { field: "feeling"},
+        { field: "title"},
+        { field: "datetime"},
+        { field: "distance" },
+        { field: "calories" },
+        { field: "timetaken" },
+        { field: "minhr" },
+        { field: "avghr" },
+        { field: "maxhr" },
+        { field: "minpace" },
+        { field: "avgpace" },
+        { field: "maxpace" },
+        { field: "createdon" }
        ];
        
        const autoGroupColumnDef = {
@@ -36,14 +43,15 @@
            field: "activitytype",
            cellRenderer:'agGroupCellRenderer',
            cellRendererParams: {
-               checkbox: true
+               checkbox: false,
            }
        }
        
        // let the grid know which columns and what data to use
        const gridOptions = {
           defaultColDef: {
-              sortable: true
+              sortable: true,
+              resizable:true,
           },
            columnDefs: columnDefs,
            pagination: true,
@@ -60,7 +68,12 @@
        new agGrid.Grid(eGridDiv, gridOptions);
 
        gridOptions.api.setRowData(<%- JSON.stringify(data.result) %>);
-       
+       var allColumnIds = [];
+        gridOptions.columnApi.getAllColumns().forEach(function (column) {
+          allColumnIds.push(column.colId);
+        });
+
+        gridOptions.columnApi.autoSizeColumns(allColumnIds, false);
       
        
       //  agGrid.simpleHttpRequest({url: 'https://www.ag-grid.com/example-assets/row-data.json'})

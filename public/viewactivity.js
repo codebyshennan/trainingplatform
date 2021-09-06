@@ -1,6 +1,30 @@
+const toggleImg = (target) => {
+  switch (target) {
+      case "Swimming":
+        infoactivitytype.innerHTML = `<i class="fas fa-swimmer" style="font-size: 3rem"></i>`
+        break;
+      
+      case "Walking":
+      case "Running":
+        infoactivitytype.innerHTML = `<i class="fas fa-running" style="font-size: 3rem"></i>`
+        break;
+
+      case "Virtual Cycling":
+      case "Cycling":
+        infoactivitytype.innerHTML = `<i class="fas fa-biking" style="font-size: 3rem"></i>`
+        break;
+
+      case "Gym":
+        infoactivitytype.innerHTML = `<i class="fas fa-dumbbell" style="font-size: 3rem"></i>`
+        break;
+
+      default:
+        break;
+    }
+}
 
 document.addEventListener('DOMContentLoaded', ()=>{
-    
+  const infoModalTitle = document.getElementById('infoModalTitle');
   const infostartdate = document.querySelector('#infostartdate');
   const infodatecontainer = document.getElementById('infodatecontainer');
   const infoactivitytype = document.getElementById('infoactivitytype');
@@ -55,28 +79,11 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }
   }
 
+
+
  infoactivitylist.addEventListener('change', (e)=>{
     const value = e.target.value;
-    switch (value) {
-      case "swimming":
-        infoactivitytype.innerHTML = `<i class="fas fa-swimmer" style="font-size: 3rem"></i>`
-        break;
-
-      case "running":
-        infoactivitytype.innerHTML = `<i class="fas fa-running" style="font-size: 3rem"></i>`
-        break;
-
-      case "cycling":
-        infoactivitytype.innerHTML = `<i class="fas fa-biking" style="font-size: 3rem"></i>`
-        break;
-
-      case "gym":
-        infoactivitytype.innerHTML = `<i class="fas fa-dumbbell" style="font-size: 3rem"></i>`
-        break;
-
-      default:
-        break;
-    }
+    toggleImg(value);
   })
 
   infoperceivedexertion.addEventListener('change', (e)=>{
