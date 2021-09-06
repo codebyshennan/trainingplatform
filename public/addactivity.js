@@ -495,21 +495,22 @@ document.addEventListener('DOMContentLoaded', ()=>{
   }
 
   activitylist.addEventListener('change', (e)=>{
+    console.log('change')
     const value = e.target.value;
     switch (value) {
-      case "swimming":
+      case "Swimming":
         activitytype.innerHTML = `<i class="fas fa-swimmer" style="font-size: 3rem"></i>`
         break;
 
-      case "running":
+      case "Running":
         activitytype.innerHTML = `<i class="fas fa-running" style="font-size: 3rem"></i>`
         break;
 
-      case "cycling":
+      case "Cycling":
         activitytype.innerHTML = `<i class="fas fa-biking" style="font-size: 3rem"></i>`
         break;
 
-      case "gym":
+      case "Gym":
         activitytype.innerHTML = `<i class="fas fa-dumbbell" style="font-size: 3rem"></i>`
         break;
 
@@ -621,8 +622,23 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }
   })
 
+const freezeFields = document.querySelectorAll('input')
+const freezetextareas = document.querySelector('textarea')
+const freezeSelect =document.querySelectorAll('select')
+
 trainingfile.addEventListener('change', (ev)=> {
   filepath.innerText = ev.target.value;
+  freezeFields.forEach((inputfield) => {
+    inputfield.setAttribute('readonly', true)
+    }
+  )
+
+  freezeSelect.forEach((selectfield) => {
+    selectfield.setAttribute('disabled', true)
+    }
+  )
+  freezetextareas.setAttribute('readonly',true)
+  
 })
 
 

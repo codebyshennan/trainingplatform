@@ -83,6 +83,7 @@ CREATE TABLE IF NOT EXISTS training
   distance NUMERIC(6,2),
   calories INTEGER,
   timetaken TIME,
+  feeling INTEGER,
   minpace NUMERIC(6,2),
   avgpace NUMERIC(6,2),
   maxpace NUMERIC(6,2),
@@ -106,33 +107,22 @@ CREATE TABLE profilephotos (
   photo TEXT
 );
 
+CREATE TABLE IF NOT EXISTS todolist (
+  id SERIAL PRIMARY KEY,
+  athleteid INTEGER REFERENCES athlete(id),
+  todo TEXT
+);
 
+CREATE TABLE IF NOT EXISTS comments (
+  id SERIAL PRIMARY KEY,
+  trainingid INTEGER REFERENCES training(id),
+  sendfrom TEXT,
+  sendto TEXT,
+  comments TEXT
+);
 
--- function to make new table per registrant      
-CREATE FUNCTION add_todo() RETURNS trigger as $todo$
-BEGIN
-  EXECUTE FORMAT('CREATE TABLE %I (id SERIAL PRIMARY KEY, athleteid INTEGER REFERENCES athlete(id), todo TEXT)', NEW.username ||'_todo');
-  RETURN NEW;
-END;
-$todo$ LANGUAGE plpgsql;
-
-CREATE TRIGGER todo
-AFTER INSERT
-ON athlete
-FOR EACH ROW
-EXECUTE PROCEDURE add_todo();
-
--- function to make new comments per training
--- ath1_posttrg#213_comments
-CREATE FUNCTION add_comments() RETURNS trigger as $comments$
-BEGIN
-  EXECUTE FORMAT('CREATE TABLE %I (id SERIAL PRIMARY KEY, trainingid INTEGER REFERENCES training(id), sendfrom TEXT, sendto TEXT, comments TEXT)', 'ath' || NEW.athleteid || '_posttrg#' || NEW.id ||'_comments');
-  RETURN NEW;
-END;
-$comments$ LANGUAGE plpgsql;
-
-CREATE TRIGGER comments
-BEFORE INSERT
-ON training
-FOR EACH ROW
-EXECUTE PROCEDURE add_comments();
+CREATE TABLE IF NOT EXISTS notifications {
+  id SERIAL PRIMARY KEY,
+  athleteid INTEGER REFERENCES athlete(id),
+  trainingnotification TEXT
+}

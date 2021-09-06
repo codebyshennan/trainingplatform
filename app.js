@@ -6,14 +6,9 @@ import pg from "pg";
 import jsSHA from "jssha";
 import multer from 'multer';
 import fs from 'fs';
-import tcx from 'tcx-js';
-import { JSDOM } from 'jsdom';
 import { SportsLib } from '@sports-alliance/sports-lib';
 import { EventExporterGPX } from '@sports-alliance/sports-lib/lib/events/adapters/exporters/exporter.gpx.js'
-
 import { DOMParser } from 'xmldom'
-
-
 
 // initialise express and define port parameters
 const app = express();
@@ -24,18 +19,59 @@ const SALT = process.env.SALT;
 const multerFileUpload = multer({ dest: 'uploads/trainingfiles/' });
 const multerPhotoUpload = multer({ dest: 'uploads/profilephotos/' });
 
-// disables extensibility of URLencoding
+// disables extensibility of URL encoding
 app.use(express.urlencoded( {extended: false} ));
 app.use(express.json())
+
 // Override POST requests with query param ?_method=PUT to be PUT requests
 app.use(methodOverride('_method'));
 app.use(cookieParser());
 
-// enables Express to serve files from a local folder called 'public, and renames the route as /static;
+// enables Express to serve files from a local folder called 'public', and renames the route as /static;
 app.use('/static', express.static('public'));
-app.use(express.static('uploads'));
+app.use('/uploads', express.static('uploads'));
 
 app.set('view engine', 'ejs');
+
+// create separate DB connection configs for production vs non-production environments.
+// ensure our server still works on our local machines.
+let pgConnectionConfigs;
+if (process.env.ENV === 'PRODUCTION') {
+  // determine how we connect to the remote Postgres server
+  pgConnectionConfigs = {
+    user: 'postgres',
+    // set DB_PASSWORD as an environment variable for security.
+    password: process.env.DB_PASSWORD,
+    host: 'localhost',
+    database: 'trainingpeaks',
+    port: 5432,
+  };
+} else {
+  // determine how we connect to the local Postgres server
+  pgConnectionConfigs = {
+    user: 'wonggshennan',
+    host: 'localhost',
+    database: 'trainingpeaks',
+    port: 5432,
+  };
+}
+
+// postgres middleware
+const {Pool} = pg;
+const pool = new Pool(pgConnectionConfigs);
+pool.connect();
+
+// Helper functions
+const gettime = (timeelem) => {
+    const array = timeelem.split(':');
+    if(array.length === 0 || array[0]=== '') return 0;
+    const hours = +array[0] * 60 * 60;
+    const minutes = +array[1] * 60;
+    const seconds = +array[2];
+
+    const sum = hours+minutes+seconds
+    return sum;
+  }
 
 const hour = 1000 * 60 * 60; // 3 600 000
 let session;
@@ -51,7 +87,6 @@ app.use(
     }
   )
 )
-
 
 // generate the hashed + salt version of the input
 const getHash = (input) => {
@@ -76,9 +111,6 @@ app.use((req,res,next)=>{
   }
   next();
 })
-
-
-
 
 // auth middleware to restrict user states
 const checkAuth = (req,res,next)=> {
@@ -120,45 +152,13 @@ const checkAuth = (req,res,next)=> {
     }
   }
 
-
-
-
-
-// create separate DB connection configs for production vs non-production environments.
-// ensure our server still works on our local machines.
-let pgConnectionConfigs;
-if (process.env.ENV === 'PRODUCTION') {
-  // determine how we connect to the remote Postgres server
-  pgConnectionConfigs = {
-    user: 'postgres',
-    // set DB_PASSWORD as an environment variable for security.
-    password: process.env.DB_PASSWORD,
-    host: 'localhost',
-    database: 'trainingpeaks',
-    port: 5432,
-  };
-} else {
-  // determine how we connect to the local Postgres server
-  pgConnectionConfigs = {
-    user: 'wonggshennan',
-    host: 'localhost',
-    database: 'trainingpeaks',
-    port: 5432,
-  };
-}
-
-// postgres middleware
-const {Pool} = pg;
-const pool = new Pool(pgConnectionConfigs);
-pool.connect();
-
-// base route to homepage
+// base route to login page
 app.get('/', (req,res)=> {
   res.render('home'); 
 })
 
 app.get('/about',(req,res)=>{
-  res.render('about');
+  res.render('home');
 })
 
 // registration for athlete
@@ -239,7 +239,6 @@ app.get('/athlete/login', (req,res)=>{
   )
 })
 
-
 // Route for logging photos
 app.use((req,res,next)=> {
   
@@ -273,29 +272,193 @@ app.use((req,res,next)=> {
   next();
 })
 
+const getToDoList = (req,res,next) => {
+  const {index} = req.params;
+  pool.query('SELECT * FROM todolist WHERE athleteid = $1', [index], (err,data)=>{
+    res.locals.todolist = JSON.stringify(data.rows);
+  })
+  next();
+}
 
-// User Story #: Athlete should be able to get an overview of his training status
+// User Story #1: Athlete should be able to get an overview of his training status
 // Athlete Dashboard
-app.get('/athlete/:index/dashboard', checkAuth, (req,res)=> {
+app.get('/athlete/:index/dashboard', checkAuth, getToDoList, (req,res)=> {
 
   const {index} = req.params;
-  console.log(index);
 
-  pool.query(`SELECT to_char(training.date, 'YYYY-MM-DD') as date, CAST(training.distance AS DECIMAL) as distance FROM training WHERE athleteid = ${index} AND activitytype='Running' ORDER BY date ASC`, (err,result)=> {
-    let data = result.rows.map(x => x = {date: x.date, distance: +x.distance} );
+  // for the stats charts
+  pool.query(`SELECT * FROM training WHERE athleteid = ${index} ORDER BY datetime ASC`, (err,result)=> {
+
+    const nooftrainings = result.rows.length;
+
+    // returns an array of today's training
+    const todaydata = result.rows.filter(data => new Date(data.datetime).toDateString() === new Date().toDateString());
+
+    const thismonthdata = result.rows.filter(data => new Date(data.datetime).getMonth() === new Date().getMonth() && new Date(data.datetime).getFullYear() === new Date().getFullYear())
+
+    const onlyUnique = (value,index,self) => {
+      return self.indexOf(value) === index;
+    }
+    
+    const activitytypes = result.rows.map(data => data.activitytype).filter(onlyUnique)
+
+    const toChartArray = (tally) => {
+      let chartarray = []
+      for(const type in tally) {
+        chartarray.push({'x':type, 'y':tally[type]});
+      }
+      return chartarray;
+    }
+
+    const typetally = (type, data) => {
+      let activitytally = {}
+      for(let x=0; x < data.length; x++) {
+        let activity = data[x].activitytype
+        if (activity in activitytally) {
+          activitytally[activity] += Number(data[x][type])
+        } else {
+          activitytally[activity] = 0;
+        }
+      }
+
+      
+      return activitytally;
+    }
+
+    const activitytypetally = (data) => {
+      let activitytally = {}
+      for(let x=0; x < data.length; x++) {
+        let activity = data[x].activitytype
+        if (activity in activitytally) {
+          activitytally[activity] += 1;
+        } else {
+          activitytally[activity] = 0;
+        }
+      }
+
+      let chartarray = []
+      for(const type in activitytally) {
+        chartarray.push({'x':type, 'y':activitytally[type]});
+      }
+
+      return activitytally;
+    }
+    
+    const distancereducer = (accumulator, currentvalue) => (Number(accumulator) || 0 ) + Number(currentvalue.distance) 
+    const caloriereducer = (accumulator, currentvalue) => (Number(accumulator) || 0 ) + Number(currentvalue.calories)
+    const hrreducer = (accumulator, currentvalue) => (Number(accumulator) || 0 ) + Number(currentvalue.avghr)
+    const pacereducer = (accumulator, currentvalue) => (Number(accumulator) || 0 ) + Number(currentvalue.avgpace)
+    const durationreducer = (accumulator, currentvalue) => (Number(accumulator) || 0 ) + Number(gettime(currentvalue.timetaken))
+    
+    //all time data
+    const alltimedistance = result.rows.reduce(distancereducer);
+    const alltimecalories = result.rows.reduce(caloriereducer);
+    const alltimeavghr = result.rows.reduce(hrreducer) / nooftrainings;
+    const alltimeduration = result.rows.reduce(durationreducer);
+    const alltimeavgpace = result.rows.reduce(pacereducer);
+
+    //data this month
+    const thismonthcalories = thismonthdata.reduce(caloriereducer,0);
+    const thismonthdistance = thismonthdata.reduce(distancereducer,0);
+    const thismonthduration = thismonthdata.reduce(durationreducer,0);
+    const thismonthavghr = thismonthdata.reduce(hrreducer,0) / thismonthdata.length;
+    const thismonthavgpace = thismonthdata.reduce(pacereducer,0) / thismonthdata.length; 
+
+    const timetally = (data) => {
+      let activitytally = {}
+      for(let x=0; x < data.length; x++) {
+        let activity = data[x].activitytype
+        if (activity in activitytally) {
+          activitytally[activity] += gettime(data[x]['timetaken'])
+        } else {
+          activitytally[activity] = 0;
+        }
+      }
+
+      return activitytally;
+    }
+
+    //segment by sports
+    const caloriebysport = typetally('calories', result.rows);
+    const distancebysport = typetally('distance', result.rows);
+    const durationbysport = timetally(result.rows);
+    const combinedhrbysport = typetally('avghr', result.rows);
+
+    const chartcalorie = toChartArray(caloriebysport)
+    const chartdistance = toChartArray(distancebysport)
+    const chartduration = toChartArray(durationbysport)
+    
+
+    const avghrbysport = (()=> {
+                          Object.keys(combinedhrbysport).forEach( sport => {
+                          combinedhrbysport[sport] /= activitytypetally(result.rows)[sport]
+                          })
+                          return combinedhrbysport;
+                        })();
+
+                              
+    const combinedpacebysport = typetally('avgpace', result.rows);
+    const avgpacebysport = (()=> {
+                            Object.keys(combinedpacebysport).forEach(sport => {
+                            combinedpacebysport[sport] /= activitytypetally(result.rows)[sport]
+                            })
+                            return combinedpacebysport;
+                          })();
+
+    const chartavgpace = toChartArray(avgpacebysport)
+    const chartavghr = toChartArray(avghrbysport)
+
+    
     // console.log(data);
-    const output = { output: 
-                      {index: index,
-                      username: req.session.username, 
-                      title: "DashBoard",
-                      chartdata: data}
+    const output = { data: 
+                      {
+                        index: index,
+                        thismonthactivity: thismonthdata.length,
+                        todolist: res.locals.todolist,
+                        username: req.session.username, 
+                        title: "DashBoard",
+                        activitytypes: activitytypes,
+                        todaydata: todaydata, // if date is today
+                        alltimedistance: alltimedistance,
+                        alltimecalories: alltimecalories,
+                        alltimeavghr: alltimeavghr,
+                        alltimeduration: alltimeduration,
+                        alltimeavgpace: alltimeavgpace,
+                        thismonthcalories: thismonthcalories,
+                        thismonthdistance: thismonthdistance,
+                        thismonthduration: thismonthduration,
+                        thismonthavghr: thismonthavghr,
+                        thismonthavgpace: thismonthavgpace,
+                        caloriebysport: chartcalorie,
+                        distancebysport: chartdistance,
+                        durationbysport: chartduration,
+                        avghrbysport: chartavghr,
+                        avgpacebysport: chartavgpace,
+                        activitytypetally: toChartArray(activitytypetally(result.rows)),
+                        chartdata: result.rows
+                      }
                     };
-    // console.log('output >> ', output.data[0]);
+    console.log('output >> ', output);
       res.render('dashboard', output);
   })
+}).post('/athlete/:index/dashboard/todo', checkAuth, (req,res)=> {
 
+  const {todo} = req.body;
+  const {index} = req.params;
+  const queryinput = [index, todo];
+  console.log(queryinput)
+  pool.query("INSERT INTO todolist (athleteid, todo) VALUES ($1,$2) RETURNING *", queryinput, (err,data)=> {
+    res.status(200).send(data.rows);
+  } )
+}).delete('/athlete/:index/dashboard/todo', checkAuth, (req,res)=> {
+  const {id} = req.body;
+
+  pool.query('DELETE FROM todolist WHERE id = $1 RETURNING *', [id], (err,data)=> {
+    res.status(200).send(data.rows);
+  })
 })
 
+// dead route: used to get column names
 const getFormLabels = (req,res,next) => {
   pool.query('SELECT column_name FROM INFORMATION_SCHEMA.COLUMNS WHERE table_name = \'training\';')
   .then((result)=>{
@@ -310,7 +473,14 @@ const getFormLabels = (req,res,next) => {
 
 // User Story #: Athlete should be see his training schedule, past, present, future, and be able to add activities
 // athlete schedule
-app.get('/athlete/:index/schedule', checkAuth, getFormLabels, (req,res)=> {
+/**
+ * @param  {index/schedule'} '/athlete/
+ * @param  {} checkAuth
+ * @param  {} getFormLabels
+ * @param  {} req
+ * @param  {} res
+ */
+app.get('/athlete/:index/schedule', checkAuth, (req,res)=> {
 
   const {index} = req.params;
   console.log('req.session.username >> ', req.session.username)
@@ -331,6 +501,11 @@ app.get('/athlete/:index/schedule', checkAuth, getFormLabels, (req,res)=> {
   })
 })
 
+/**
+ * @param  {} req
+ * @param  {} res
+ * @param  {} next
+ */
 
 const extractInfo = (req,res,next) => {
 
@@ -344,7 +519,6 @@ const extractInfo = (req,res,next) => {
     case 'tcx':
       
       fs.readFile(filepath, 'utf-8', (error, readFileResult)=>{
-        console.log(readFileResult);
       SportsLib.importFromTCX(new DOMParser().parseFromString(readFileResult,'text/xml'))
       .then((importResult)=>{
       // do Stuff with the file
@@ -352,13 +526,17 @@ const extractInfo = (req,res,next) => {
         const jsondata = importResult.toJSON();
         console.log(jsondata)
         const values = [
-          jsondata.stats['Activity Types'][0], // activitytype
-          new Date(jsondata.startDate).toISOString().substr(0,10), // date
-          new Date(jsondata.startDate).toISOString().substr(11,8), // time
+          jsondata.stats.description, //description
+          jsondata.stats['Activity Types'][0],// activitytype
+          new Date(jsondata.startDate).toISOString(), //datetime
           jsondata['name'], // title
           jsondata.stats.Distance / 1000, // distance
           jsondata.stats.Energy, // calories
           new Date(jsondata.stats.Duration * 1000).toISOString().substr(11,8), // timetaken
+          jsondata.stats['Minimum speed in kilometres per hour'],// minpace
+          jsondata.stats['Average speed in kilometres per hour'],// avgpace
+          jsondata.stats['Maximum speed in kilometres per hour'],// maxpace
+          jsondata.stats['Minimum Heart Rate'],// minhr
           jsondata.stats['Average Heart Rate'], // avghr
           jsondata.stats['Maximum Heart Rate'], // maxhr
           req.session.userid, // athleteid
@@ -366,11 +544,11 @@ const extractInfo = (req,res,next) => {
         ]
 
         pool.query(`INSERT INTO 
-        training (activitytype, date, time, title, distance, calories, timetaken, avghr, maxhr, athleteid, createdby) 
-        VALUES   (    $1,        $2,   $3,   $4,      $5,       $6,       $7,       $8,    $9,      $10,        $11) 
+        training (description, activitytype, datetime, title, distance, calories, timetaken, minpace, avgpace, maxpace, minhr, avghr, maxhr, athleteid, createdby) 
+        VALUES   ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) 
         RETURNING *`, values)
         .then((queryResult)=>{
-          res.send(queryResult.rows[0]);
+          res.redirect('schedule');
         })
       });
     })
@@ -409,7 +587,7 @@ const extractInfo = (req,res,next) => {
             });
         })
           .then((event) => {
-            fs.readFile(outputGpxFilePath, 'utf-8', (error, readFileResult)=>{
+            fs.readFile(outputGpxFilePath, 'utf-8', (error, readFileResult)=>{ //custom DOMParser should be included as an argument
               SportsLib.importFromGPX(readFileResult, DOMParser)
               .then((importResult)=>{
               // do Stuff with the file
@@ -417,25 +595,29 @@ const extractInfo = (req,res,next) => {
                 const jsondata = importResult.toJSON();
                 console.log(jsondata)
                 const values = [
-                  jsondata.stats['Activity Types'][0], // activitytype
-                  new Date(jsondata.startDate).toISOString().substr(0,10), // date
-                  new Date(jsondata.startDate).toISOString().substr(11,8), // time
-                  jsondata['name'], // title
-                  jsondata.stats.Distance / 1000, // distance
-                  jsondata.stats.Energy, // calories
-                  new Date(jsondata.stats.Duration * 1000).toISOString().substr(11,8), // timetaken
-                  jsondata.stats['Average Heart Rate'], // avghr
-                  jsondata.stats['Maximum Heart Rate'], // maxhr
-                  req.session.userid, // athleteid
-                  req.session.username, // createdby
-                ]
+          jsondata.stats.description, //description
+          jsondata.stats['Activity Types'][0],// activitytype
+          new Date(jsondata.startDate).toISOString(), //datetime
+          jsondata['name'], // title
+          jsondata.stats.Distance / 1000, // distance
+          jsondata.stats.Energy, // calories
+          new Date(jsondata.stats.Duration * 1000).toISOString().substr(11,8), // timetaken
+          jsondata.stats['Minimum speed in kilometres per hour'],// minpace
+          jsondata.stats['Average speed in kilometres per hour'],// avgpace
+          jsondata.stats['Maximum speed in kilometres per hour'],// maxpace
+          jsondata.stats['Minimum Heart Rate'],// minhr
+          jsondata.stats['Average Heart Rate'], // avghr
+          jsondata.stats['Maximum Heart Rate'], // maxhr
+          req.session.userid, // athleteid
+          req.session.username, // createdby
+        ]
 
-                pool.query(`INSERT INTO 
-                training (activitytype, date, time, title, distance, calories, timetaken, avghr, maxhr, athleteid, createdby) 
-                VALUES   (    $1,        $2,   $3,   $4,      $5,       $6,       $7,       $8,    $9,      $10,        $11) 
-                RETURNING *`, values)
+        pool.query(`INSERT INTO 
+        training (description, activitytype, datetime, title, distance, calories, timetaken, minpace, avgpace, maxpace, minhr, avghr, maxhr, athleteid, createdby) 
+        VALUES   ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) 
+        RETURNING *`, values)
                 .then((queryResult)=>{
-                  res.send(queryResult.rows[0]);
+                  res.redirect('schedule');
                 })
               });
             })
@@ -445,19 +627,24 @@ const extractInfo = (req,res,next) => {
 
     case 'gpx':
       fs.readFile(filepath, 'utf-8', (error, readFileResult)=>{
+        //custom DOMParser should be included as an argument
       SportsLib.importFromGPX(readFileResult, DOMParser)
       .then((importResult)=>{
       // do Stuff with the file
       // so much work just to get the calories
         const jsondata = importResult.toJSON();
         const values = [
-          jsondata.stats['Activity Types'][0], // activitytype
-          new Date(jsondata.startDate).toISOString().substr(0,10), // date
-          new Date(jsondata.startDate).toISOString().substr(11,8), // time
+          jsondata.stats.description, //description
+          jsondata.stats['Activity Types'][0],// activitytype
+          new Date(jsondata.startDate).toISOString(), //datetime
           jsondata['name'], // title
           jsondata.stats.Distance / 1000, // distance
           jsondata.stats.Energy, // calories
           new Date(jsondata.stats.Duration * 1000).toISOString().substr(11,8), // timetaken
+          jsondata.stats['Minimum speed in kilometres per hour'],// minpace
+          jsondata.stats['Average speed in kilometres per hour'],// avgpace
+          jsondata.stats['Maximum speed in kilometres per hour'],// maxpace
+          jsondata.stats['Minimum Heart Rate'],// minhr
           jsondata.stats['Average Heart Rate'], // avghr
           jsondata.stats['Maximum Heart Rate'], // maxhr
           req.session.userid, // athleteid
@@ -465,11 +652,11 @@ const extractInfo = (req,res,next) => {
         ]
 
         pool.query(`INSERT INTO 
-        training (activitytype, date, time, title, distance, calories, timetaken, avghr, maxhr, athleteid, createdby) 
-        VALUES   (    $1,        $2,   $3,   $4,      $5,       $6,       $7,       $8,    $9,      $10,        $11) 
+        training (description, activitytype, datetime, title, distance, calories, timetaken, minpace, avgpace, maxpace, minhr, avghr, maxhr, athleteid, createdby) 
+        VALUES   ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) 
         RETURNING *`, values)
         .then((queryResult)=>{
-          res.send(queryResult.rows[0]);
+          res.redirect('schedule');
         })
       });
     })
@@ -507,25 +694,46 @@ const addActivity = (req, res, next)=> {
   } else {
  
     const {index} = req.params;
-    const {TITLE, ACTIVITYTYPE, MAXhr, AVGhr, TIMETAKEN, CALORIES, DISTANCE, TIME, DATE} = req.body;
-    
-    const values = [ACTIVITYTYPE, DATE, TIME, TITLE, DISTANCE, CALORIES, TIMETAKEN, AVGhr, MAXhr, index];
+    const {startdate, time} = req.body;
+    const timestamp = new Date(startdate.concat(' ',time));
+    const {description, activitytype, perceivedexertion, title, actualdistance, actualcalories, actualtimetaken, feeling, minpace, avgpace, maxpace,minhr,avghr,maxhr} = req.body;
+    const traininginsert = [description,activitytype,perceivedexertion,timestamp,title,actualdistance,actualcalories,actualtimetaken,feeling,minpace,avgpace,maxpace,minhr,avghr,maxhr,index, req.session.username]
+    const {comments} = req.body;
+    const coach = res.locals.coachname;
 
-    pool.query(`INSERT INTO training (activitytype, date, time, title, distance, calories, timetaken, avghr, maxhr, athleteid) 
-    VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) RETURNING *`, values)
+
+    pool.query(`INSERT INTO 
+        training (description, activitytype, perceivedexertion,datetime, title, distance, calories, timetaken, feeling, minpace, avgpace, maxpace, minhr, avghr, maxhr, athleteid, createdby) 
+        VALUES   ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16, $17) 
+        RETURNING *`, traininginsert)
     .then((result)=>{
-      res.send('add success')
+      pool.query(`INSERT INTO comments (trainingid, sendfrom, sendto, comments) VALUES (${result.rows[0].id},${req.session.username},${coach},${comments}) RETURNING *`)
+    }).then((data)=> {
+      res.redirect('schedule');
     })
   }
 }
 
+const getCoach = (req,res,next) => {
+  const {index} = req.params;
+  pool.query(`SELECT coachid FROM relation WHERE athleteid = ${index}`)
+  .then(result => {
+    pool.query(`SELECT * FROM coach WHERE coachid = ${result.rows[0].id}`)
+  }).then(result => {
+    res.locals.coachname = result.rows[0].username;
+    next();
+  })
 
-app.post('/athlete/:index/schedule/addactivity', checkAuth, multerFileUpload.single('trainingfile'), addActivity, extractInfo, updateDB)
+  next();
+}
+
+
+app.post('/athlete/:index/schedule/addactivity', checkAuth, multerFileUpload.single('trainingfile'), getCoach, addActivity, extractInfo, updateDB)
 
 app.post('/athlete/:index/schedule', (req,res)=> {
   console.log(req.body);
-  const {id, date} = req.body;
-  pool.query(`UPDATE training SET date = '${date}' WHERE id = ${id} RETURNING *`).then((response)=> res.status(200).send(response));
+  const {id, datetime, title} = req.body;
+  pool.query(`UPDATE training SET datetime = '${datetime}', title = '${title}' WHERE id = ${id} RETURNING *`).then((response)=> res.status(200).send(response));
 })
 
 

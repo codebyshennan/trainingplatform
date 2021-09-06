@@ -1,4 +1,4 @@
-<%- include('header', {index: `${output.index}`, title: `${output.title}`, username: `${output.username}`}) -%>
+<%- include('header', {index: `${data.index}`, title: `${data.title}`, username: `${data.username}`}) -%>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@3.5.1"></script>
 <script src="https://cdn.jsdelivr.net/npm/luxon@2.0"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.1"></script>
@@ -81,14 +81,35 @@
           
           <div class="row">Stay on Track by adding your training goals</div>
           <div class="row">
-                                
-            <button id="createtodo">Create New</button>        
+
+            <div id="todocontainer">
+              <% JSON.parse(data.todolist).forEach( x => { %> 
+              <div class="row"> 
+                <div class="col-11">- <%- x.todo %></div> 
+                <div class="col-1">
+                  <button type="button removetodo" class="btn btn-light" id="<%- x.id %>">
+                    <span><i class="far fa-trash-alt"></i></span>
+                </div>
+              </div>
+              <% }) %>
+            </div>
             
             <div class="list-group" id="todolist">
+              <form id="todoform">
+                <label class="list-group-item">
+                  <div class="row">
+                    <div class="col-9"><input type="text" class="form-control" value="" style="border:none;" id="input"></div>
+                    <div class="d-flex col-3 justify-content-center align-items-center">
+                      <button type="button" class="btn btn-light" id="createtodo"><span><i class="fas fa-plus"></i></span></button>
+                      <span style="margin-left:10px">   </span>
+                    </div>
+                  </div>
+                </label>
+              </form>
             </div>
-
           </div>
         </div>
+
         <div class="col-4">
           <div class="d-flex row align-items-center">
             <div class="col-1"><i class="far fa-calendar-times"></i></div>
@@ -97,7 +118,31 @@
           </div>
           <hr>
           <div class="d-flex row align-items-center">
-            <div class="col text-center">You have no scheduled workouts today</div></div>
+            <div class="col text-center" id="todayworkout">
+              <div class="row">
+              <div class="list-group">
+                 <% if(data.todaydata.length === 0) {%>
+                  You have no scheduled workouts today
+                  <% } else { %>
+                  <% data.todaydata.forEach( trg => { %> 
+                  <a
+                    href="#"
+                    class="list-group-item list-group-item-action"
+                    aria-current="true"
+                  >
+                    <div class="d-flex w-100 justify-content-between">
+                      <h5 class="mb-1"><strong><%= trg.title %> </strong> | <%= trg.timetaken %> | <%= trg.distance %>km   </h5>
+                      <small><%= trg.activitytype %> </small>
+                    </div>
+                    <p class="mb-1"><%= trg.description %> </p>
+                    <small> Avg HR <%= trg.avghr %> | Avg Pace <%= trg.avgpace %>km/h  </small>
+                  </a>
+                </div>
+              <% }) %>
+              <% } %> 
+            </div>
+            <br>
+          </div>
           
           <div class="d-flex row align-items-center">
             <div class="col-1"><i class="far fa-calendar-alt"></i></div>
@@ -106,64 +151,83 @@
           </div>
           <hr>
           <div class="d-flex row align-items-center">
-            <div class="col text-center">You have no scheduled workouts tomorrow</div> </div>
+            <div class="col text-center" id="tmlworkout">You have no scheduled workouts tomorrow</div> </div>
         </div>
+        </div>
+        
+
         <div class="col-4">
           <div class="d-flex row align-items-center">
-            <div class="col col-lg-2">1 of 3</div>
-            <div class="col-auto">Variable width content</div>
-            <div class="col col-lg-2">3 of 3</div>
+            <div class="col-1"><i class="far fa-calendar-times"></i></div>
+            <div class="col-10">All-time Statistics</div>
+            <div class="col-1"></div>
           </div>
-          <div class="row justify-content-center">Fitness Ramp Rates</div>
-          <div class="row">
-            <div class="col-6">Chart 1</div>
-            <div class="col-6">Chart 2</div>
-          </div>
-          <div class="row">
-            <div class="col-6">Chart 3</div>
-            <div class="col-6">Chart 4</div>
-          </div>
-          <div class="row">
-            <div class="col-1">fa icon medal</div>
-            <div class="col-10">Peak Performances</div>
-            <div class="col-1">View All</div>
-          </div>
-          <div class="row">
-            <div class="list-group">
-              <a
-                href="#"
-                class="list-group-item list-group-item-action active"
-                aria-current="true"
-              >
-                <div class="d-flex w-100 justify-content-between">
-                  <h5 class="mb-1">List group item heading</h5>
-                  <small>3 days ago</small>
+            <hr>
+          <div class="d-flex row flex-row justify-content-center align-items-center">
+            <div class="col text-center">
+              <div class="card border-secondary mb-3">
+                <div class="card-header">All-time Distance</div>
+                <div class="card-body">
+                  <h4 class="card-title"><%= data.alltimedistance %>km </h4>
                 </div>
-                <p class="mb-1">Some placeholder content in a paragraph.</p>
-                <small>And some small print.</small>
-              </a>
-              <a href="#" class="list-group-item list-group-item-action">
-                <div class="d-flex w-100 justify-content-between">
-                  <h5 class="mb-1">List group item heading</h5>
-                  <small class="text-muted">3 days ago</small>
+              </div>
+            </div>
+            <div class="col text-center">
+              <div class="card border-secondary mb-3">
+                  <div class="card-header">All-time Duration</div>
+                  <div class="card-body">
+                    <h4 class="card-title"><%- Math.round(data.alltimeduration / 60 / 60) %>hrs </h4>
+                  </div>
+              </div>
+            </div>
+            <div class="col text-center">
+              <div class="card border-secondary mb-3">
+                <div class="card-header">All-time Avg HR</div>
+                <div class="card-body">
+                  <h4 class="card-title"><%- Math.round(data.alltimeavghr) %> </h4>
                 </div>
-                <p class="mb-1">Some placeholder content in a paragraph.</p>
-                <small class="text-muted">And some muted small print.</small>
-              </a>
-              <a href="#" class="list-group-item list-group-item-action">
-                <div class="d-flex w-100 justify-content-between">
-                  <h5 class="mb-1">List group item heading</h5>
-                  <small class="text-muted">3 days ago</small>
+              </div>
+            </div>
+          </div>
+
+          <div class="row justify-content-center">
+            <div class="d-flex row align-items-center">
+              <div class="col-1"><i class="far fa-calendar-times"></i></div>
+              <div class="col-10">This Month's Statistics</div>
+              <div class="col-1"></div>
+            </div>
+            <hr>
+          <div class="d-flex row flex-row justify-content-center align-items-center">
+            <div class="col text-center">
+              <div class="card border-secondary mb-3">
+                <div class="card-header">This Month's Total Activities</div>
+                <div class="card-body">
+                  <h4 class="card-title"><%= data.thismonthactivity %> </h4>
                 </div>
-                <p class="mb-1">Some placeholder content in a paragraph.</p>
-                <small class="text-muted">And some muted small print.</small>
-              </a>
+              </div>
+            </div>
+            <div class="col text-center">
+              <div class="card border-secondary mb-3">
+                  <div class="card-header">This Month's Calories Burnt</div>
+                  <div class="card-body">
+                    <h4 class="card-title"><%- Math.round(data.thismonthcalories) %>kcal </h4>
+                  </div>
+              </div>
+            </div>
+            <div class="col text-center">
+              <div class="card border-secondary mb-3">
+                <div class="card-header">This Month's Duration Clocked</div>
+                <div class="card-body">
+                  <h4 class="card-title"><%- Math.round(data.thismonthduration / 60 / 60) %>hrs </h4>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </div>
   </div>
+  
 
   <!-- Stats Tab -->
   <div
@@ -184,66 +248,6 @@
         aria-labelledby="exampleModalToggleLabel"
         tabindex="-1"
       >
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="exampleModalToggleLabel">Modal 1</h5>
-              <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              ></button>
-            </div>
-            <div class="modal-body">
-              Show a second modal and hide this one with the button below.
-            </div>
-            <div class="modal-footer">
-              <button
-                class="btn btn-primary"
-                data-bs-target="#exampleModalToggle2"
-                data-bs-toggle="modal"
-                data-bs-dismiss="modal"
-              >
-                Open second modal
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div
-        class="modal fade"
-        id="exampleModalToggle2"
-        aria-hidden="true"
-        aria-labelledby="exampleModalToggleLabel2"
-        tabindex="-1"
-      >
-        <div class="modal-dialog modal-dialog-centered">
-          <div class="modal-content">
-            <div class="modal-header">
-              <h5 class="modal-title" id="exampleModalToggleLabel2">Modal 2</h5>
-              <button
-                type="button"
-                class="btn-close"
-                data-bs-dismiss="modal"
-                aria-label="Close"
-              ></button>
-            </div>
-            <div class="modal-body">
-              Hide this modal and show the first with the button below.
-            </div>
-            <div class="modal-footer">
-              <button
-                class="btn btn-primary"
-                data-bs-target="#exampleModalToggle"
-                data-bs-toggle="modal"
-                data-bs-dismiss="modal"
-              >
-                Back to first
-              </button>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </div>
@@ -255,69 +259,110 @@
     role="tabpanel"
     aria-labelledby="contact-tab"
   >
-    ...
+    <!-- todo: get the longest distance clocked -->
+    <!-- todo: get the highest heart rates -->
+    <!-- todo: get the highest calories in an activity -->
   </div>
 </div>
 
 <script>
-  
-
 
   window.addEventListener("load", () => {
+    const todocontainer = document.getElementById('todocontainer');
     const todolist = document.getElementById('todolist');
+    const todoform = document.getElementById('todoform');
     const createtodo = document.getElementById('createtodo');
+    
 
     createtodo.addEventListener("click",()=> {
     
-      todolist.innerHTML += `<form>
-        <label class="list-group-item">
-          <div class="row">
-            <div class="col-1"><input class="form-check-input me-1" type="checkbox" value="" /></div>
-            <div class="col-8"><input type="text" class="form-control" value="input todo" style="border:none;"></div>
-            <div class="col-3">
-              <button type="submit">Add new</button>
-              <button type="submit">Add new</button>
-            </div>
-         
+      axios({
+        method: "post",
+        headers: {
+              'Content-Type': 'application/json',
+            },
+        url: '/athlete/<%=data.index%>/dashboard/todo',
+        data: {'todo': document.getElementById('input').value}
+      })
+        .then( (response) => {
+          //handle success
+          todocontainer.innerHTML+=`<div class="row"> 
+                <div class="col-11">- ${response.data[0].todo}</div> 
+                <div class="col-1">
+                  <button type="button removetodo" class="btn btn-light" id="${response.data[0].id}">
+                    <span><i class="far fa-trash-alt"></i></span>
+                </div>
+              </div>`
           
-        </label>
-      </form>`;
-
+          console.log(response);
+        })
+        .catch( (response) => {
+          //handle error
+          console.log(response);
+        });
     })
 
-                var testChart = new Chart(document.getElementById("testchart"), {
-                  type: "line",
-                  data: {
-                    datasets: [
-                      {
-                        label: "My First dataset",
-                        backgroundColor: "rgb(255, 99, 132)",
-                        borderColor: "rgb(255, 99, 132)",
-                        data: <%- JSON.stringify(output.chartdata) %>,
-                      },
-                    ],
-                  },
-                  options: {
-                    scales: {
-                      x: {
-                        type: "time",
-                        time: {
-                          unit: "day",
-                        },
-                      },
-                      y: {
-                        ticks: {
-                          stepSize: 10.0,
-                        },
-                      },
-                    },
-                    parsing: {
-                      xAxisKey: "date",
-                      yAxisKey: "distance",
-                    },
-                  },
-                });
-            });
+    const removetodo = document.getElementsByClassName('removetodo');
+
+    removetodo.forEach( (bin) => {
+      
+      bin.addEventListener("click",(ev)=> {
+    
+      axios({
+        method: "delete",
+        headers: {
+              'Content-Type': 'application/json',
+            },
+        url: '/athlete/<%=data.index%>/dashboard/todo',
+        data: {'id': ev.target.id}
+      })
+        .then( (response) => {
+          //handle success
+          document.getElementById(response.data[0].id).remove();
+        })
+        .catch( (response) => {
+          //handle error
+          console.log(response);
+        });
+    })
+  })
+
+    const todayworkout = document.getElementById('todayworkout');
+    
+
+    const testChart = new Chart(document.getElementById("testchart"), {
+      type: "line",
+      data: {
+        datasets: [
+          {
+            label: "My First dataset",
+            backgroundColor: "rgb(255, 99, 132)",
+            borderColor: "rgb(255, 99, 132)",
+            data: <%- JSON.stringify(data.caloriebysport) %>,
+          }
+        ],
+      },
+      options: {
+        // scales: {
+        //   x: {
+        //     type: "time",
+        //     time: {
+        //       unit: "day",
+        //     },
+        //   },
+        //   y: {
+        //     ticks: {
+        //       stepSize: 10.0,
+        //     },
+        //   },
+        // },
+        parsing: {
+          // xAxisKey: "date",
+          // yAxisKey: "distance",
+        },
+      },
+    });
+});
 
 
 
