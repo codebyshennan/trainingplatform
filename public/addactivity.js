@@ -1,4 +1,5 @@
 
+
 document.addEventListener('DOMContentLoaded', ()=>{
     
   const startdate = document.querySelector('#startdate');
@@ -38,6 +39,8 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const rampdowntemplate = document.getElementById('rampdowntemplate');
 
   const workoutbuilder = document.getElementById('workoutbuilder');
+
+
 
   // Helper functions
   const gettime = (timeelem) => {
@@ -113,7 +116,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   activetemplate.addEventListener('click', (ev)=>{
     const injecthtml = async ()=> {templatecontainer.innerHTML +=
         `
-        <a href='#' class='list-group-item list-group-item-action'>
+        <a href='#' class='list-group-item list-group-item-action '>
           <div class='d-flex w-100 mb-1 justify-content-between'>
             <h5 class='templateblockheader'>Active</h5>
             <small class='templateremove'>Remove block</small></div>
@@ -240,8 +243,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
               </span>
             </span>
           </a>
-        </fieldset>`
-        ;}
+        </fieldset>`}
     
     injecthtml().then((val)=> {
       const templatetime = document.getElementsByClassName('templatetime');
@@ -312,8 +314,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
                 </span>
               </span>
             </a>
-          </fieldset>  `
-        ;}
+          </fieldset>`}
     
     injecthtml().then((val)=> {
       const templatetime = document.getElementsByClassName('templatetime');
@@ -324,7 +325,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
       plannedtime.value = validateTime(toTimeStr(newtime));
       timetaken.innerText = plannedtime.value;
     })
-
   })
 
   rampuptemplate.addEventListener('click', (ev)=>{

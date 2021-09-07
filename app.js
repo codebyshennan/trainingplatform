@@ -9,11 +9,39 @@ import fs from 'fs';
 import { SportsLib } from '@sports-alliance/sports-lib';
 import { EventExporterGPX } from '@sports-alliance/sports-lib/lib/events/adapters/exporters/exporter.gpx.js'
 import { DOMParser } from 'xmldom'
+import aws from 'aws-sdk';
+import multerS3 from 'multer-s3';
+import dotenv from 'dotenv';
+
+// if (process.env.NODE_ENV !== 'production') {
+  // require('dotenv').config();
+// }
+
+// const s3 = new aws.S3({
+//   accessKeyId: process.env.ACCESSKEYID,
+//   secretAccessKey: process.env.SECRETACCESSKEY,
+// });
+
+// const multerFileUpload = multer({
+//   storage: multerS3({
+//     s3,
+//     bucket: 'trgpks-bucket',
+//     acl: 'public-read',
+//     metadata: (request, file, callback) => {
+//       callback(null, { fieldName: file.fieldname });
+//     },
+//     key: (request, file, callback) => {
+//       callback(null, Date.now().toString());
+//     },
+//   }),
+// });
 
 // initialise express and define port parameters
 const app = express();
-const PORT = 3001;
-const SALT = process.env.SALT;
+const PORT = process.env.PORT || 3001;
+const SALT = process.env.SALT || 'rocketacademy';
+
+
 
 // set the name of the upload directory here
 const multerFileUpload = multer({ dest: 'uploads/trainingfiles/' });
@@ -62,6 +90,8 @@ const pool = new Pool(pgConnectionConfigs);
 pool.connect();
 
 // Helper functions
+
+// returns the time in seconds from a string
 const gettime = (timeelem) => {
     const array = timeelem.split(':');
     if(array.length === 0 || array[0]=== '') return 0;
@@ -73,7 +103,6 @@ const gettime = (timeelem) => {
     return sum;
   }
 
-const hour = 1000 * 60 * 60; // 3 600 000
 let session;
 
 // initialises session usage; each session lasts an hour
@@ -82,7 +111,7 @@ app.use(
     {
       secret: "hash",
       saveUninitialized: true,
-      cookie: { maxAge: hour},
+      cookie: { maxAge: 1000 * 60 * 60}, //an hour
       resave: false,
     }
   )
