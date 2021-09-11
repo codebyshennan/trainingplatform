@@ -41,8 +41,6 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const SALT = process.env.SALT || 'rocketacademy';
 
-
-
 // set the name of the upload directory here
 const multerFileUpload = multer({ dest: 'uploads/trainingfiles/' });
 const multerPhotoUpload = multer({ dest: 'uploads/profilephotos/' });
@@ -91,7 +89,7 @@ pool.connect();
 
 // Helper functions
 
-// returns the time in seconds from a string
+// returns the time in seconds from a string (xx:xx:xx to xx sec)
 const gettime = (timeelem) => {
     const array = timeelem.split(':');
     if(array.length === 0 || array[0]=== '') return 0;
@@ -184,9 +182,7 @@ const checkAuth = (req,res,next)=> {
 // base route to login page
 app.get('/', (req,res)=> {
   res.render('home'); 
-})
-
-app.get('/about',(req,res)=>{
+}).get('/about',(req,res)=>{
   res.render('home');
 })
 
@@ -378,20 +374,6 @@ app.get('/athlete/:index/dashboard', checkAuth, getToDoList, (req,res)=> {
     const hrreducer = (accumulator, currentvalue) => (Number(accumulator) || 0 ) + Number(currentvalue.avghr)
     const pacereducer = (accumulator, currentvalue) => (Number(accumulator) || 0 ) + Number(currentvalue.avgpace)
     const durationreducer = (accumulator, currentvalue) => (Number(accumulator) || 0 ) + Number(gettime(currentvalue.timetaken))
-    
-    //all time data
-    const alltimedistance = result.rows.reduce(distancereducer);
-    const alltimecalories = result.rows.reduce(caloriereducer);
-    const alltimeavghr = result.rows.reduce(hrreducer) / nooftrainings;
-    const alltimeduration = result.rows.reduce(durationreducer);
-    const alltimeavgpace = result.rows.reduce(pacereducer);
-
-    //data this month
-    const thismonthcalories = thismonthdata.reduce(caloriereducer,0);
-    const thismonthdistance = thismonthdata.reduce(distancereducer,0);
-    const thismonthduration = thismonthdata.reduce(durationreducer,0);
-    const thismonthavghr = thismonthdata.reduce(hrreducer,0) / thismonthdata.length;
-    const thismonthavgpace = thismonthdata.reduce(pacereducer,0) / thismonthdata.length; 
 
     const timetally = (data) => {
       let activitytally = {}
@@ -413,11 +395,6 @@ app.get('/athlete/:index/dashboard', checkAuth, getToDoList, (req,res)=> {
     const durationbysport = timetally(result.rows);
     const combinedhrbysport = typetally('avghr', result.rows);
 
-    const chartcalorie = toChartArray(caloriebysport)
-    const chartdistance = toChartArray(distancebysport)
-    const chartduration = toChartArray(durationbysport)
-    
-
     const avghrbysport = (()=> {
                           Object.keys(combinedhrbysport).forEach( sport => {
                           combinedhrbysport[sport] /= activitytypetally(result.rows)[sport]
@@ -433,10 +410,6 @@ app.get('/athlete/:index/dashboard', checkAuth, getToDoList, (req,res)=> {
                             })
                             return combinedpacebysport;
                           })();
-
-    const chartavgpace = toChartArray(avgpacebysport)
-    const chartavghr = toChartArray(avghrbysport)
-
     
     // console.log(data);
     const output = { data: 
@@ -448,21 +421,21 @@ app.get('/athlete/:index/dashboard', checkAuth, getToDoList, (req,res)=> {
                         title: "DashBoard",
                         activitytypes: activitytypes,
                         todaydata: todaydata, // if date is today
-                        alltimedistance: alltimedistance,
-                        alltimecalories: alltimecalories,
-                        alltimeavghr: alltimeavghr,
-                        alltimeduration: alltimeduration,
-                        alltimeavgpace: alltimeavgpace,
-                        thismonthcalories: thismonthcalories,
-                        thismonthdistance: thismonthdistance,
-                        thismonthduration: thismonthduration,
-                        thismonthavghr: thismonthavghr,
-                        thismonthavgpace: thismonthavgpace,
-                        caloriebysport: chartcalorie,
-                        distancebysport: chartdistance,
-                        durationbysport: chartduration,
-                        avghrbysport: chartavghr,
-                        avgpacebysport: chartavgpace,
+                        alltimedistance: result.rows.reduce(distancereducer),
+                        alltimecalories: result.rows.reduce(caloriereducer),
+                        alltimeavghr: result.rows.reduce(hrreducer) / nooftrainings,
+                        alltimeduration: result.rows.reduce(durationreducer),
+                        alltimeavgpace: result.rows.reduce(pacereducer),
+                        thismonthcalories: thismonthdata.reduce(caloriereducer,0),
+                        thismonthdistance: thismonthdata.reduce(distancereducer,0),
+                        thismonthduration: thismonthdata.reduce(durationreducer,0),
+                        thismonthavghr: thismonthdata.reduce(hrreducer,0) / thismonthdata.length,
+                        thismonthavgpace: thismonthdata.reduce(pacereducer,0) / thismonthdata.length,
+                        caloriebysport: toChartArray(caloriebysport),
+                        distancebysport: toChartArray(distancebysport),
+                        durationbysport: toChartArray(durationbysport),
+                        avghrbysport: toChartArray(avgpacebysport),
+                        avgpacebysport: toChartArray(avghrbysport),
                         activitytypetally: toChartArray(activitytypetally(result.rows)),
                         chartdata: result.rows
                       }
@@ -932,6 +905,8 @@ const getAthleteTrainingInfo = (req,res,next) => {
 
       let atharray= []
 
+
+      // keep the declaration that's essential outside the for loop
       for(const ath in uniqueathleteid) {
         const fname = res.locals.athletedata[ath].fname;
         const lname = res.locals.athletedata[ath].lname;
@@ -941,7 +916,7 @@ const getAthleteTrainingInfo = (req,res,next) => {
         console.log('athspecificdata >> ', athspecificdata)
         const thismonthdata = athspecificdata.filter(data => new Date(data.datetime).getMonth() === new Date().getMonth() && new Date(data.datetime).getFullYear() === new Date().getFullYear())
 
-
+        // modularise this
         const toChartArray = (tally) => {
           let chartarray = []
           for(const type in tally) {
@@ -1213,9 +1188,13 @@ app.get('/logout', (req,res)=>{
 })
 
 app.get('/test', (req,res)=> {
-  res.render('test2');
+  res.render('test');
 }).post('/test', (req,res)=> {
   console.log(req.body)
+})
+
+app.get('/drag', (req,res)=> {
+  res.render('drag');
 })
 
 app.get('*', (req,res)=> {

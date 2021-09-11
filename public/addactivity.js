@@ -1,5 +1,3 @@
-
-
 document.addEventListener('DOMContentLoaded', ()=>{
     
   const startdate = document.querySelector('#startdate');
@@ -39,20 +37,61 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const rampdowntemplate = document.getElementById('rampdowntemplate');
 
   const workoutbuilder = document.getElementById('workoutbuilder');
+  
 
+
+const button = document.querySelector('.append-button')
+button.addEventListener('click', (e)=> {
+
+  console.log('hi >> ')
+  let util = myLineChart.data.datasets[0].data;
+  const addValue = (xvalue, yvalue) => {
+    const value = {x: xvalue, y: yvalue};
+    util.push(value)
+      // TODO: change the scaling due to input
+  // myLineChart.options.scales.x.min
+  }
+
+  const removeValue = (xvalue, yvalue) => {
+    
+    const indexOfvalue = util.findIndex(element => element.x == xvalue && element.y == yvalue);
+    util.splice(indexOfvalue,1);
+
+    // TODO: change scaling due to removal
+  }
+
+  const getCurrentX = () => {
+    return util[util.length-1].x;
+  }
+
+  console.log(getCurrentX());
+
+  addValue(1617262000000, 100);
+  addValue(1617264000000, 100);
+
+  //mandatory to update chart after addition or removal
+  myLineChart.update();
+
+  // TODO: make min and max the min and max values of the data
+})
 
 
   // Helper functions
   const gettime = (timeelem) => {
-    const array = timeelem.value.split(':');
-    console.log(array)
-    if(array.length === 0 || array[0]=== '') return 0;
-    const hours = +array[0] * 60 * 60;
-    const minutes = +array[1] * 60;
-    const seconds = +array[2];
+    let timearray = [];
+    if(typeof timeelem == 'object') {
+      timearray = timeelem.value.split(':')
+    } else if (typeof timeelem == 'string') {
+      timearray = timeelem.split(':');
+    } else {
+      return 0;
+    }
+    if(timearray.length === 0 || timearray[0]=== '') return 0;
+    const hours = +timearray[0] * 60 * 60;
+    const minutes = +timearray[1] * 60;
+    const seconds = +timearray[2];
 
     const sum = hours+minutes+seconds
-    console.log(sum)
     return sum;
   }
 
@@ -68,7 +107,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   const validateTime = (elem) => {
     console.log('Commencing time validation...')
     const durationarray = elem.split(':')
-    console.log('durationarray >> ', durationarray)
       if(durationarray.length===1){
         return (durationarray[0].length == 1 ? '0' + durationarray[0] : (durationarray[0] || '00')) + ':00:00';
       } else if (durationarray.length == 2){
@@ -79,32 +117,149 @@ document.addEventListener('DOMContentLoaded', ()=>{
       }
   }
 
+
+let templateoptions = [];
+  // takes in an array of objects
+  const constructTemplate = (options) => {
+
+    options.forEach(elem => {
+
+      const {data, repeats} = elem;
+
+      if(repeats > 1) {
+        const fieldset = document.createElement('fieldset')
+        const label = document.createElement('label')
+      }
+
+      elem.forEach
+
+
+      const templatelistitem = document.createElement('li')
+        const templatelink = document.createElement('a');
+        templatelink.classList.add('list-group-item', 'list-group-item-action');
+          const templatedetails = document.createElement('div')
+          templatedetails.classList.add('d-flex','w-100','mb-1','justify-content-between');
+          const templateblockheader = document.createElement('h5');
+          templateblockheader.classList.add('templateblockheader');
+          templateblockheader.textContent = data.header;
+          const templateremove = document.createElement('small');
+          templateremove.classList.add('templateremove');
+          templateremove.textContent = 'x'
+          templatedetails.appendChild(templateblockheader)
+          templatedetails.appendChild(templateremove);
+
+          const templateblockdetails = document.createElement('span');
+          templateblockdetails.classList.add('templateblockdetails', 'd-flex', 'row', 'w-100', 'mb-1');
+          const templatetime = document.createElement('span')
+          templatetime.classList.add('col-2');
+          const inputtime = document.createElement('input');
+          inputtime.classList.add('templatetime')
+          inputtime.value = data.time;
+          templatetime.appendChild(inputtime)
+
+          const templateminhr = document.createElement('span')
+          templateminhr.classList.add('col-1');
+          const inputminhr = document.createElement('input');
+          inputminhr.classList.add('templateminhr')
+          inputminhr.value = data.minhr;
+          templateminhr.appendChild(inputminhr)
+
+          const spacer = document.createElement('span');
+          spacer.classList.add('col-1')
+          spacer.style.textAlign='center';
+          spacer.innerHTML = `<strong> - </strong>`
+
+          const templatemaxhr = document.createElement('span')
+          templatemaxhr.classList.add('col-1');
+          const inputmaxhr = document.createElement('input');
+          inputmaxhr.classList.add('templatemaxhr')
+          inputmaxhr.value = data.maxhr;
+          templatemaxhr.appendChild(inputmaxhr)
+
+          const templatehrpercentage = document.createElement('span');
+          templatehrpercentage.classList.add('col-4');
+          templatehrpercentage.innerHTML = `<strong> % of Maximum Heart Rate </strong>`;
+          const templatehr = document.createElement('p')
+          templatehr.classList.add('templatehr')
+          templatehr.textContent = data.hrrange + 'bpm'
+
+          templatehrpercentage.appendChild(templatehr)
+
+          templatelink.appendChild(templatedetails)
+          templatelink.appendChild(templateblockdetails)
+          templatelink.appendChild(templatetime)
+          templatelink.appendChild(templateminhr)
+          templatelink.appendChild(spacer);
+          templatelink.appendChild(templatemaxhr);
+          templatelink.appendChild(templatehrpercentage);
+
+        templatelistitem.appendChild(templatelink)
+
+      templatecontainer.appendChild(templatelistitem);
+    })
+  }
+
+  const updateChart = () => {
+
+    console.log('Updating charts...');
+
+    console.log(templateoptions.data)
+
+    // reset the chart
+    draggablechart.destroy();
+
+    // get the max time
+    let starttime = 0;
+
+    const hr = templateoptions.data[templateoptions.data.length-1].maxhr;
+
+    if(chartdata.length > 0) {
+      starttime = chartdata.reduce((acc, current)=> {
+        return Math.max(acc, current.x)
+      }, 0)
+      chartdata[0].y = hr;
+    }
+
+
+    const endtime = starttime + gettime(templateoptions.data[templateoptions.data.length-1].time);
+
+    const datainput = {x: endtime, y: hr};
+    chartdata.push(datainput);
+
+    draggablechart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [
+        {
+          label: 'Training Duration Splits by % of Max HR',
+          data: chartdata,
+          fill:true,
+          stepped:true}
+      ]
+    },
+    options: config
+});
+
+  }
+
   warmuptemplate.addEventListener('click', (ev)=>{ 
-    const injecthtml = async ()=> {
-      templatecontainer.innerHTML +=
-        `
-          <a href='#' class='list-group-item list-group-item-action'>
-            <div class='d-flex w-100 mb-1 justify-content-between'>
-              <h5 class='templateblockheader'>
-                Warm-Up
-              </h5>
-              <small class='templateremove'>Remove block</small></div>
-            <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-              <span class="col-2"><input type='text' class='templatetime' value="0:20:00" style='border:none;font-size:2rem;width:100px'></span>
-              <span class="col-1"><input type='text' class='templateminhr' value="60" style='border:none;font-size:2rem;width:50px'></span> 
-              <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-              <span class="col-1"><input type='text' class='templatemaxhr' value="80" style='border:none;font-size:2rem;width:50px'></span>
-              <span class="col-4"> 
-                <strong>% of Maximum Heart Rate</strong>
-                <p class='templatehr'>106-120bpm</p>
-              </span>
-          </a>
-        `
-    ;}
     
+    const warmupdata = [{data: {header: 'Warm-up', time:'0:20:00', minhr:'60', maxhr:'80', hrrange:'106-120'}, repeats:0}]
+    console.log('insert warmup');
+
+      warmupdata.data.forEach(data => {
+        templateoptions.data.push(data);
+      })
+      updateChart();
+
+    const injecthtml = async ()=> {
+      templatecontainer.innerHTML = ''
+      constructTemplate(templateoptions);
+    ;}
+
     injecthtml().then((val)=> {
-      const templatetime = document.getElementsByClassName('templatetime');
-      let newtime = gettime(plannedtime);
+      const templatetime = [...document.getElementsByClassName('templatetime')];
+      let newtime = 0;
       for(let x=0; x<templatetime.length;x++){
         newtime += gettime(templatetime[x])
       }
@@ -114,27 +269,30 @@ document.addEventListener('DOMContentLoaded', ()=>{
   })
 
   activetemplate.addEventListener('click', (ev)=>{
-    const injecthtml = async ()=> {templatecontainer.innerHTML +=
-        `
-        <a href='#' class='list-group-item list-group-item-action '>
-          <div class='d-flex w-100 mb-1 justify-content-between'>
-            <h5 class='templateblockheader'>Active</h5>
-            <small class='templateremove'>Remove block</small></div>
-          <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-            <span class="col-2"><input type='text' class='templatetime' value="0:10:00" style='border:none;font-size:2rem;width:100px'></span>
-            <span class="col-1"><input type='text' class='templateminhr' value="89" style='border:none;font-size:2rem;width:50px'></span> 
-            <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-            <span class="col-1"><input type='text' class='templatemaxhr' value="98" style='border:none;font-size:2rem;width:50px'></span>
-            <span class="col-4"> 
-              <strong>% of Maximum Heart Rate</strong>
-              <p class='templatehr'>157-172bpm</p>
-            </span>
-        </a>`
-        ;}
-    
+
+    const activedata = {data: [{header: 'Active', time:'0:10:00', minhr:'89', maxhr:'98', hrrange:'157-172'}], repeats:0 };
+    console.log('insert active');
+
+    if (templateoptions.data.length===0) {
+      templateoptions = {
+        data: [activedata.data], 
+        repeats: activedata.repeats }
+      updateChart();
+    } else {
+      activedata.data.forEach( data => {
+        templateoptions.data.push(data);
+      })
+      updateChart();
+    }
+
+    const injecthtml = async ()=> {
+      templatecontainer.innerHTML = ''
+      constructTemplate(templateoptions);
+    ;}
+
     injecthtml().then((val)=> {
-      const templatetime = document.getElementsByClassName('templatetime');
-      let newtime = gettime(plannedtime);
+      const templatetime = [...document.getElementsByClassName('templatetime')];
+      let newtime = 0;
       for(let x=0; x<templatetime.length;x++){
         newtime += gettime(templatetime[x])
       }
@@ -142,26 +300,17 @@ document.addEventListener('DOMContentLoaded', ()=>{
       timetaken.innerText = plannedtime.value;
     })
 
+
+
   })
 
   recoverytemplate.addEventListener('click', (ev)=>{
+
+
+    const options = {data:[{header: 'Active', time:'0:05:00', minhr:'50', maxhr:'60', hrrange:'88-106'}], repeats:0}
     const injecthtml = async ()=> {
-      templatecontainer.innerHTML +=
-        `<a href='#' class='list-group-item list-group-item-action'>
-          <div class='d-flex w-100 mb-1 justify-content-between'>
-            <h5 class='templateblockheader'>Recovery</h5>
-            <small class='templateremove'>Remove block</small></div>
-          <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-            <span class="col-2"><input type='text' class='templatetime' value="0:05:00" style='border:none;font-size:2rem;width:100px'></span>
-            <span class="col-1"><input type='text' class='templateminhr' value="50" style='border:none;font-size:2rem;width:50px'></span> 
-            <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-            <span class="col-1"><input type='text' class='templatemaxhr' value="60" style='border:none;font-size:2rem;width:50px'></span>
-            <span class="col-4"> 
-              <strong>% of Maximum Heart Rate</strong>
-              <p class='templatehr'>88-106bpm</p>
-            </span>
-          </a>`
-        ;}
+      const active = constructTemplate(options);
+    ;}
     
     injecthtml().then((val)=> {
       const templatetime = document.getElementsByClassName('templatetime');

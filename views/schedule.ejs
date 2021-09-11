@@ -5,18 +5,41 @@
 
 <!-- scripts for chartJS / workout charts -->
 <script src="https://cdn.jsdelivr.net/npm/luxon@2.0.2/build/global/luxon.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.0.1/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.5.1/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.1"></script>
 <script src="/static/chartjs-dragdata.js"></script>
 
 <!-- separate scripts for handling activity behaviour  -->
-<script src="/static/addactivity.js"></script>
-<script src="/static/viewactivity.js"></script>
+<script defer src="/static/addactivity.js"></script>
+<script defer src="/static/viewactivity.js"></script>
 
 <!-- draggablejs for workout builder -->
-<script src="https://cdn.jsdelivr.net/npm/@shopify/draggable@1.0.0-beta.11/lib/draggable.bundle.js"></script>
-
+<script src="https://cdn.jsdelivr.net/npm/@shopify/draggable@1.0.0-beta.11/lib/sortable.js"></script>
 
 <style>
+
+  .templatetime, .templateminhr, .templatemaxhr{
+    border:none;
+    font-size:2rem;
+  }
+
+  .templatetime {
+    width: 100px;
+  }
+
+  .templateminhr, .templatemaxhr{
+   width: 50px;
+  }
+
+  .draggable--over:hover::before{
+  content: 'Insert here';
+  text-align: center;
+  box-sizing: border-box;
+  background: yellow;
+  width: 100%;
+  height: 100%;
+}
+
   #fixedbutton {
     position: fixed;
     bottom: 50px;
@@ -41,6 +64,7 @@
   .modal-custom-addactivity{
     max-width: 95vw;
     max-height: 95vh;
+    font-size: 0.8rem;
   }
 
   .modal-custom-viewactivity{
@@ -575,7 +599,11 @@
               </div>
               <div class="col-6" id="workoutbuilder">Workout Details Editor
                 <hr>
-                <div class="row" id="templatecontainer" style="max-height:400px;overflow:auto;"></div>
+                <div class="row" id="workoutcontainer" style="max-height:400px;overflow:auto;">
+                  <ol id="templatecontainer">
+
+                  </ol>
+                </div>
               </div>
             </div>
           </div>
@@ -872,52 +900,65 @@
 
 
 
-<!-- ChartJS scripts for making new Charts -->
 <script defer>
-  // to insert data
-  // inject into myLineChart.data <- array
+      const sortable = new Sortable.default(document.querySelectorAll("ol"), {
+        draggable: "li",
+        dragging: true,
+      });
+      
+      sortable.on("sortable:start", () => console.log(sortable));
+      sortable.on("sortable:sort", () => console.log("sortable:sort"));
+      sortable.on("sortable:sorted", () => console.log("sortable:sorted"));
+      sortable.on("sortable:stop", () => console.log("sortable:stop"));
 
-  Chart.LineElement.prototype.draw(()=>{
-      Chart.LineElement.prototype.draw().apply(this, arguments);
+      // console.log(sortable)
+    </script>
 
-      this.chart.textAlign = "center"
-      // y value and x index
-      this.chart.fillText("ZONE1", this.scale.calculateX(3.5), this.scale.calculateY(20.75))
-      this.chart.fillText("ZONE2", this.scale.calculateX(11.5), this.scale.calculateY(13))
-      this.chart.fillText("ZONE3", this.scale.calculateX(2), this.scale.calculateY(9.75))
-      this.chart.fillText("ZONE4", this.scale.calculateX(14.5), this.scale.calculateY(22.75))
-    });
 
-const ctx = document.getElementById('newChart');;
+<script defer>
+const ctx = document.getElementById('newChart');
 
-// starts with no data
-const data = [
-  {
-    x: 1617253200000,
-    y: 10
-  },
-  {
-    x: 1617256800000,
-    y: 50
-  },
-  {
-    x: 1617260400000,
-    y: 30
-  },
-    {
-    x: 1617260800000,
-    y: 30
+  const validateTime = (elem) => {
+    console.log('Commencing time validation...')
+    const durationarray = elem.split(':')
+      if(durationarray.length===1){
+        return (durationarray[0].length == 1 ? '0' + durationarray[0] 
+        : (durationarray[0] || '00')) + ':00:00';
+      } else if (durationarray.length == 2){
+        return (durationarray[0].length == 1 ? '0' + durationarray[0] 
+        : (durationarray[0] || '00')) + ':' +
+        (durationarray[1].length == 1 ? '0' + durationarray[1] 
+        : (durationarray[1] || '00')) +':00';
+      } else {
+        return (durationarray[0].length == 1 ? '0' + durationarray[0] 
+        : (durationarray[0] || '00')) + ':' + 
+        (durationarray[1].length == 1 ? '0' + durationarray[1] 
+        : (durationarray[1] || '00')) + ':' +
+        (durationarray[2].length == 1 ? '0' + durationarray[2] 
+        : (durationarray[2] || '00'));
+      }
   }
-];
+
+const toTimeString = (timeinsec) => {
+  const hour = Math.floor(timeinsec / 60 / 60);
+  const minute = Math.abs(hour * 60 - Math.floor(timeinsec / 60))
+  const second = Math.abs(minute * 60 - timeinsec)
+
+  return validateTime(`${hour}:${minute}:${second}`);
+}
+
+let chartdata = [{x:0,y:0}];
 
 const config = {
   responsive: true,
   plugins:{
     legend:{
-      display: false
+      display: true,
+
     },
     title:{
-      display: false
+      display: true,
+
     },
     tooltip: {
       callbacks: {
@@ -949,33 +990,36 @@ const config = {
     scales: {
         x:{
           type: 'linear',
-          min: 1617253200000,
-          max: 1617300800000,
+          min: 0,
+          max: 'auto',
           ticks: {
             callback(v) {
-              return new Date(v).toLocaleTimeString(navigator.language, {
-                hour: '2-digit',
-                minute:'2-digit'
-              })
+              return toTimeString(v);
+              // return v;
             }
           }
         },
         y:{
+          title: {
+            display: true,
+            text: '% of max HR',
+          },
            beginAtZero: true,
                 steps: 1,
                 stepValue: 1,
                 max: 100
           },
       }
-};
+    }
 
 
-let myLineChart = new Chart(ctx, {
+let draggablechart = new Chart(ctx, {
     type: 'line',
     data: {
       datasets: [
         {
-          data:data,
+          label: 'Training Duration Splits by % of Max HR',
+          data: chartdata,
           fill:true,
           stepped:true}
       ]
@@ -983,146 +1027,6 @@ let myLineChart = new Chart(ctx, {
     options: config
 });
 
-
-const button = document.querySelector('.append-button')
-button.addEventListener('click', (e)=> {
-
-  console.log('hi >> ')
-  let util = myLineChart.data.datasets[0].data;
-  const addValue = (xvalue, yvalue) => {
-    const value = {x: xvalue, y: yvalue};
-    util.push(value)
-      // TODO: change the scaling due to input
-  // myLineChart.options.scales.x.min
-  }
-
-  const removeValue = (xvalue, yvalue) => {
-    
-    const indexOfvalue = util.findIndex(element => element.x == xvalue && element.y == yvalue);
-    util.splice(indexOfvalue,1);
-
-    // TODO: change scaling due to removal
-  }
-
-  const getCurrentX = () => {
-    return util[util.length-1].x;
-  }
-
-  console.log(getCurrentX());
-
-  addValue(1617262000000, 100);
-  addValue(1617264000000, 100);
-
-  //mandatory to update chart after addition or removal
-  myLineChart.update();
-
-  // TODO: make min and max the min and max values of the data
-
-
-})
-
 </script>
-
-<!-- ChartJS scripts for viewing old Charts -->
-<script defer>
-  // to insert data
-  // inject into myLineChart.data <- array
-const ctxview = document.getElementById('viewChart');;
-
-// starts with no data
-const dataview = [
-  {
-    x: 1617253200000,
-    y: 10
-  },
-  {
-    x: 1617256800000,
-    y: 50
-  },
-  {
-    x: 1617260400000,
-    y: 30
-  },
-    {
-    x: 1617260800000,
-    y: 30
-  }
-];
-
-const configview = {
-  responsive: true,
-  plugins:{
-    legend:{
-      display: false
-    },
-    title:{
-      display: false
-    },
-    tooltip: {
-      callbacks: {
-        title: function(context) {
-          const timeString = new Date(context[0].parsed.x).toLocaleTimeString(navigator.language, {
-            hour: '2-digit',
-            minute:'2-digit'
-          })
-
-          return timeString
-        }
-      }
-    },
-    dragData: {        
-          round: 0,
-          dragX: false,
-          showTooltip: true,
-          onDragStart:function (e, datasetIndex, index, value) {
-          },
-          onDrag: function (e, datasetIndex, index, value) {
-              e.target.style.cursor = 'grabbing'
-              //console.log("Drag Value: ", value.x)
-          },
-          onDragEnd: function (e, datasetIndex, index, value) {
-              e.target.style.cursor = 'default'
-          },
-      },
-    },
-    scales: {
-        x:{
-          type: 'linear',
-          min: 1617253200000,
-          max: 1617300800000,
-          ticks: {
-            callback(v) {
-              return new Date(v).toLocaleTimeString(navigator.language, {
-                hour: '2-digit',
-                minute:'2-digit'
-              })
-            }
-          }
-        },
-        y:{
-           beginAtZero: true,
-                steps: 1,
-                stepValue: 1,
-                max: 100
-          },
-      }
-};
-
-
-let chartview = new Chart(ctxview, {
-    type: 'line',
-    data: {
-      datasets: [
-        {
-          data:data,
-          fill:true,
-          stepped:true}
-      ]
-    },
-    options: configview
-});
-
-</script>
-
 </body>
 </html>
