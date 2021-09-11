@@ -8,7 +8,7 @@ import multer from 'multer';
 import fs from 'fs';
 import { SportsLib } from '@sports-alliance/sports-lib';
 import { EventExporterGPX } from '@sports-alliance/sports-lib/lib/events/adapters/exporters/exporter.gpx.js'
-import { DOMParser } from 'xmldom'
+import { DOMParser } from '@xmldom/xmldom'
 import aws from 'aws-sdk';
 import multerS3 from 'multer-s3';
 import dotenv from 'dotenv';
