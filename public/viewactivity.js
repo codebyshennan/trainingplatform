@@ -1,20 +1,20 @@
 const toggleImg = (target) => {
   switch (target) {
-      case "Swimming":
+      case "swimming":
         infoactivitytype.innerHTML = `<i class="fas fa-swimmer" style="font-size: 3rem"></i>`
         break;
       
-      case "Walking":
-      case "Running":
+      case "walking":
+      case "running":
         infoactivitytype.innerHTML = `<i class="fas fa-running" style="font-size: 3rem"></i>`
         break;
 
-      case "Virtual Cycling":
-      case "Cycling":
+      case "virtual cycling":
+      case "cycling":
         infoactivitytype.innerHTML = `<i class="fas fa-biking" style="font-size: 3rem"></i>`
         break;
 
-      case "Gym":
+      case "gym":
         infoactivitytype.innerHTML = `<i class="fas fa-dumbbell" style="font-size: 3rem"></i>`
         break;
 
@@ -67,17 +67,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
       e.target.value = "";
       e.target.type='text';
   }, true)
-
-  for(let j=0;j<2;j++){
-    for(let i = 0; i<12; i++){
-      for(int in interval) {
-        
-        infotimelist.add(new Option
-        ((i==0?12:i).toString() + ':'+ interval[int] + ' '+ meridiem[j], 
-        i.toString() + ':' + interval[int]))
-      }
-    }
-  }
 
 
 

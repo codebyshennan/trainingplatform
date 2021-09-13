@@ -14,11 +14,6 @@ BEGIN
   END LOOP;
 END $$ ;
 
-DROP FUNCTION add_todo CASCADE;
-DROP FUNCTION add_comments CASCADE;
-DROP TRIGGER todo ON athlete;
-DROP TRIGGER comments on training;
-
 -- SELECT AGE(timestamp athlete.birthdate) FROM athlete;
 CREATE TABLE IF NOT EXISTS athlete 
 (
@@ -121,8 +116,8 @@ CREATE TABLE IF NOT EXISTS comments (
   comments TEXT
 );
 
-CREATE TABLE IF NOT EXISTS notifications {
+CREATE TABLE IF NOT EXISTS notifications (
   id SERIAL PRIMARY KEY,
   athleteid INTEGER REFERENCES athlete(id),
   trainingnotification TEXT
-}
+)

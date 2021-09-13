@@ -8,7 +8,7 @@ import multer from 'multer';
 import fs from 'fs';
 import { SportsLib } from '@sports-alliance/sports-lib';
 import { EventExporterGPX } from '@sports-alliance/sports-lib/lib/events/adapters/exporters/exporter.gpx.js'
-import { DOMParser } from '@xmldom/xmldom'
+import { DOMParser } from 'xmldom'
 import aws from 'aws-sdk';
 import multerS3 from 'multer-s3';
 import dotenv from 'dotenv';
@@ -91,6 +91,7 @@ pool.connect();
 
 // returns the time in seconds from a string (xx:xx:xx to xx sec)
 const gettime = (timeelem) => {
+    if(timeelem === null) return 0;
     const array = timeelem.split(':');
     if(array.length === 0 || array[0]=== '') return 0;
     const hours = +array[0] * 60 * 60;
@@ -227,7 +228,6 @@ app.get('/athlete/login', (req,res)=>{
       res.status(503).send(err);
     }
 
-    console.log('result >> ', result.rows)
     if (result.rows.length === 0){
       res.status(403).send('login failed')
       return;
@@ -257,7 +257,6 @@ app.get('/athlete/login', (req,res)=>{
     session.userid = user.id;
     session.username = user.username;
     session.loggedin = true;
-    console.log('session>> ', session);
     res.redirect(`/athlete/${user.id}/dashboard`)
 
     } 
@@ -267,7 +266,6 @@ app.get('/athlete/login', (req,res)=>{
 // Route for logging photos
 app.use((req,res,next)=> {
   
-  console.log(req.session)
   if(req.session.profilepic){
     next();
     return;
@@ -300,7 +298,7 @@ app.use((req,res,next)=> {
 const getToDoList = (req,res,next) => {
   const {index} = req.params;
   pool.query('SELECT * FROM todolist WHERE athleteid = $1', [index], (err,data)=>{
-    res.locals.todolist = JSON.stringify(data.rows);
+    res.locals.todolist = data.rows;
   })
   next();
 }
@@ -313,9 +311,9 @@ app.get('/athlete/:index/dashboard', checkAuth, getToDoList, (req,res)=> {
 
   // for the stats charts
   pool.query(`SELECT * FROM training WHERE athleteid = ${index} ORDER BY datetime ASC`, (err,result)=> {
-
+    
     const nooftrainings = result.rows.length;
-
+    console.table(result.rows);
     // returns an array of today's training
     const todaydata = result.rows.filter(data => new Date(data.datetime).toDateString() === new Date().toDateString());
 
@@ -368,6 +366,13 @@ app.get('/athlete/:index/dashboard', checkAuth, getToDoList, (req,res)=> {
 
       return activitytally;
     }
+
+    const sortdistance = result.rows.sort((a,b)=> b.distance - a.distance)
+    const topthreedistance = sortdistance.slice(0,3)
+    const sortavghr = result.rows.sort((a,b)=> b.avghr - a.avghr)
+    const topthreeavghr = sortavghr.slice(0,3)
+    const sorttimetaken = result.rows.sort((a,b)=> gettime(b.timetaken) - gettime(a.timetaken))
+    const topthreetimetaken = sorttimetaken.slice(0,3)
     
     const distancereducer = (accumulator, currentvalue) => (Number(accumulator) || 0 ) + Number(currentvalue.distance) 
     const caloriereducer = (accumulator, currentvalue) => (Number(accumulator) || 0 ) + Number(currentvalue.calories)
@@ -411,9 +416,11 @@ app.get('/athlete/:index/dashboard', checkAuth, getToDoList, (req,res)=> {
                             return combinedpacebysport;
                           })();
     
-    // console.log(data);
     const output = { data: 
                       {
+                        topthreedistance,
+                        topthreeavghr,
+                        topthreetimetaken,
                         index: index,
                         thismonthactivity: thismonthdata.length,
                         todolist: res.locals.todolist,
@@ -434,13 +441,12 @@ app.get('/athlete/:index/dashboard', checkAuth, getToDoList, (req,res)=> {
                         caloriebysport: toChartArray(caloriebysport),
                         distancebysport: toChartArray(distancebysport),
                         durationbysport: toChartArray(durationbysport),
-                        avghrbysport: toChartArray(avgpacebysport),
-                        avgpacebysport: toChartArray(avghrbysport),
-                        activitytypetally: toChartArray(activitytypetally(result.rows)),
+                        avghrbysport: avgpacebysport,
+                        avgpacebysport: avghrbysport,
+                        activitytypetally: activitytypetally(result.rows),
                         chartdata: result.rows
                       }
                     };
-    console.log('output >> ', output);
       res.render('dashboard', output);
   })
 }).post('/athlete/:index/dashboard/todo', checkAuth, (req,res)=> {
@@ -448,15 +454,18 @@ app.get('/athlete/:index/dashboard', checkAuth, getToDoList, (req,res)=> {
   const {todo} = req.body;
   const {index} = req.params;
   const queryinput = [index, todo];
-  console.log(queryinput)
   pool.query("INSERT INTO todolist (athleteid, todo) VALUES ($1,$2) RETURNING *", queryinput, (err,data)=> {
     res.status(200).send(data.rows);
   } )
 }).delete('/athlete/:index/dashboard/todo', checkAuth, (req,res)=> {
   const {id} = req.body;
+  console.log('deleting')
 
-  pool.query('DELETE FROM todolist WHERE id = $1 RETURNING *', [id], (err,data)=> {
-    res.status(200).send(data.rows);
+  pool.query('DELETE FROM todolist WHERE id = $1 RETURNING *', [id])
+  .then((data)=> {
+    res.status(200).send(data);
+  }).catch((err)=>{
+    res.status(500).send(err.message)
   })
 })
 
@@ -485,7 +494,6 @@ const getFormLabels = (req,res,next) => {
 app.get('/athlete/:index/schedule', checkAuth, (req,res)=> {
 
   const {index} = req.params;
-  console.log('req.session.username >> ', req.session.username)
   pool.query(`SELECT * FROM training WHERE athleteid = ${index}`, (err,result)=> {
 
         const output = {data: 
@@ -498,7 +506,6 @@ app.get('/athlete/:index/schedule', checkAuth, (req,res)=> {
                         }
                       };
 
-                      console.log(output)
       res.render('schedule', output);
   })
 })
@@ -513,7 +520,6 @@ const extractInfo = (req,res,next) => {
   const {index} = req.params
   // TODO: detect filetype and parse accordingly
   const extension = req.file.originalname.substr(req.file.originalname.length-3,3)
-  console.log(extension)
   const filepath = req.file.path
   let outputGpxFilePath = 'uploads/trainingfiles/tmp.gpx'
 
@@ -526,7 +532,6 @@ const extractInfo = (req,res,next) => {
       // do Stuff with the file
       // so much work just to get the calories
         const jsondata = importResult.toJSON();
-        console.log(jsondata)
         const values = [
           jsondata.stats.description, //description
           jsondata.stats['Activity Types'][0],// activitytype
@@ -595,7 +600,6 @@ const extractInfo = (req,res,next) => {
               // do Stuff with the file
               // so much work just to get the calories
                 const jsondata = importResult.toJSON();
-                console.log(jsondata)
                 const values = [
           jsondata.stats.description, //description
           jsondata.stats['Activity Types'][0],// activitytype
@@ -682,7 +686,6 @@ const updateDB = (req, res)=> {
         res.status(503).send(result.rows);
         return;
       }
-      console.log("resultrows", result.rows[0].name);
       res.send(console.log(result.rows));
     })
   }
@@ -711,7 +714,7 @@ const addActivity = (req, res, next)=> {
     .then((result)=>{
       pool.query(`INSERT INTO comments (trainingid, sendfrom, sendto, comments) VALUES (${result.rows[0].id},${req.session.username},${coach},${comments}) RETURNING *`)
     }).then((data)=> {
-      res.redirect('schedule');
+      res.redirect('/athlete/:index/schedule');
     })
   }
 }
@@ -720,10 +723,8 @@ const getCoach = (req,res,next) => {
   const {index} = req.params;
   pool.query(`SELECT coachid FROM relation WHERE athleteid = ${index}`)
   .then(queryrelationResult => {
-    console.log('result.rows >> ', queryrelationResult.rows[0].coachid)
     pool.query(`SELECT * FROM coach WHERE id = '${queryrelationResult.rows[0].coachid}'`)
     .then(querycoachResult => {
-      console.log('result.rows >> ', querycoachResult)
       res.locals.coachname = querycoachResult.rows[0].username;
       next();
     })
@@ -736,12 +737,29 @@ const getCoach = (req,res,next) => {
 app.post('/athlete/:index/schedule/addactivity', checkAuth, multerFileUpload.single('trainingfile'), getCoach, addActivity, extractInfo, updateDB)
 
 app.post('/athlete/:index/schedule', (req,res)=> {
-  console.log(req.body);
   const {id, datetime, title} = req.body;
   pool.query(`UPDATE training SET datetime = '${datetime}', title = '${title}' WHERE id = ${id} RETURNING *`).then((response)=> res.status(200).send(response));
 })
 
+app.post('/athlete/:index/schedule/editactivity', checkAuth, (req,res) => {
 
+    const {index} = req.params;
+    const {infostartdate, time, id} = req.body;
+    
+    const timestamp = new Date(infostartdate.substr(0,15).concat(' ',new Date(new Date().toDateString().concat(' ', time)).toTimeString()));
+    const {description, activitytype, perceivedexertion, title, actualdistance, actualcalories, actualtimetaken, feeling, minpace, avgpace, maxpace,minhr,avghr,maxhr} = req.body;
+    const traininginsert = [description,activitytype,perceivedexertion,timestamp,title,actualdistance,actualcalories,actualtimetaken,feeling,minpace,avgpace,maxpace,minhr,avghr,maxhr,index, req.session.username, id]
+    const {comments} = req.body;
+    const coach = res.locals.coachname;
+
+
+    pool.query(`UPDATE training SET description = $1, activitytype = $2, perceivedexertion = $3, datetime = $4, title = $5, distance = $6, calories = $7, timetaken = $8, feeling = $9, minpace = $10, avgpace = $11, maxpace = $12, minhr = $13, avghr = $14, maxhr = $15, athleteid = $16, createdby = $17 WHERE id = $18 RETURNING *`, traininginsert)
+    .then((result)=>{
+      pool.query(`INSERT INTO comments (trainingid, sendfrom, sendto, comments) VALUES ('${result.rows[0].id}','${req.session.username}','${coach}','${comments}') RETURNING *`)
+    }).then((data)=> {
+      res.redirect('/athlete/:index/schedule');
+    })
+})
 
  
 // User Story #: Athlete should be able to set and customise his profile to suit his tastes. He should be able to upload a photo that persists on his page.
@@ -750,7 +768,6 @@ app.get('/athlete/:index/settings', checkAuth, (req,res)=> {
    
 
   const {index} = req.params;
-  console.log(index);
 
   pool.query(`SELECT * FROM athlete WHERE id = ${index}`, (err,result)=> {
     const output = {data: 
@@ -763,7 +780,6 @@ app.get('/athlete/:index/settings', checkAuth, (req,res)=> {
                           }
                     }
 
-    console.log(output)
     res.render('settings', output);
   })
 
@@ -776,7 +792,6 @@ if(req.file){
     const sqlQuery = 'INSERT INTO profilephotos (athleteid, photo) VALUES ($1, $2) RETURNING *';
     // get the photo column value from request.file
     const values = [index, req.file.filename];
-    console.log('values >> ', values)
     // Query using pg.Pool instead of pg.Client
     pool.query(sqlQuery, values, (error, result) => {
       if (error) {
@@ -799,8 +814,6 @@ if(req.file){
 app.get('/athlete/:index/data', checkAuth, (req,res)=> {
 
   const {index} = req.params;
-  console.log(index);
-
   
   pool.query(`SELECT * FROM training WHERE athleteid = ${index}`, (err,result)=> {
     const output = { 
@@ -811,7 +824,6 @@ app.get('/athlete/:index/data', checkAuth, (req,res)=> {
                       username: req.session.username
                     }
                   }
-    console.log('output >> ', output.data.result);
       res.render('data', output);
   })
 
@@ -832,7 +844,6 @@ app.get('/coach/login', (req,res)=>{
       res.status(503).send(err);
     }
 
-    console.log('result >> ', result.rows)
     if (result.rows.length === 0){
       res.status(403).send('login failed')
       return;
@@ -861,7 +872,6 @@ app.get('/coach/login', (req,res)=>{
     session.loggedinhash = hasheduser;
     session.userid = user.id;
     session.loggedin = true;
-    console.log('session>> ', session);
     res.redirect(`/coach/${user.id}/overview`)
 
     } 
@@ -901,7 +911,6 @@ const getAthleteTrainingInfo = (req,res,next) => {
       }
     
       const uniqueathleteid = result.rows.map(data => data.athleteid).filter(onlyUnique);
-      console.log(uniqueathleteid)
 
       let atharray= []
 
@@ -911,9 +920,7 @@ const getAthleteTrainingInfo = (req,res,next) => {
         const fname = res.locals.athletedata[ath].fname;
         const lname = res.locals.athletedata[ath].lname;
         const selectathlete = uniqueathleteid[ath]
-        console.log('Compiling ath >> ', ath)
         const athspecificdata = result.rows.filter(data => data.athleteid === selectathlete);
-        console.log('athspecificdata >> ', athspecificdata)
         const thismonthdata = athspecificdata.filter(data => new Date(data.datetime).getMonth() === new Date().getMonth() && new Date(data.datetime).getFullYear() === new Date().getFullYear())
 
         // modularise this
@@ -1050,7 +1057,6 @@ const getAthleteTrainingInfo = (req,res,next) => {
       atharray.push(athdata);
       }
       
-      console.log(atharray);
       const output = { data: 
                         {
                           index: index,
@@ -1094,9 +1100,6 @@ app.get('/coach/:index/trainingplans', checkAuth, getCoachData, getAthleteData, 
                           title: 'Training Plans'
                         }
                     }
-
-      
-
       res.render('trainingplan', output)
   })
 })
@@ -1114,13 +1117,10 @@ const {index} = req.params;
                           index: index,
                           coachdata: res.locals.coachdata,
                           athletedata: res.locals.athletedata,
-                          trainingdata: trainingdata,
+                          trainingdata: JSON.stringify(trainingdata),
                           title: 'Training Plans'
                         }
                     }
-
-      console.log('timetable output >> ', output.data.athletedata)
-
       res.render('timetable', output);
   })
 })
@@ -1128,7 +1128,6 @@ const {index} = req.params;
 app.post('/coach/:index/schedule/addactivity', checkAuth, multerFileUpload.single('trainingfile'), addActivity)
 
 app.post('/coach/:index/schedule', (req,res)=> {
-  console.log(req.body);
   const {id, date} = req.body;
   pool.query(`UPDATE training SET date = '${date}' WHERE id = ${id} RETURNING *`).then((response)=> res.status(200).send(response));
 })
@@ -1141,17 +1140,15 @@ app.get('/coach/:index/athlete/:athleteid/timetable', checkAuth, getCoachData, g
     const output = { 
                       data: 
                         {
-                          index: index,
-                          athleteid: athleteid,
+                          index,
+                          athleteid,
                           coachdata: res.locals.coachdata,
                           athletedata: res.locals.athletedata,
-                          trainingdata: trainingdata,
+                          trainingdata: JSON.stringify(trainingdata),
                           title: `Athlete ${athleteid} | Training Plans`
                         }
                     }
-
-      console.log('timetable output >> ', output)
-
+                    console.log(output.data.athletedata[0])
       res.render('timetable', output); 
   })
 })
@@ -1163,9 +1160,7 @@ app.get('/coach/:index/athlete/:athleteid/timetable', checkAuth, getCoachData, g
 app.get('/coach/:index/rankings', checkAuth, (req,res)=> {
 
   const {index} = req.params;
-  console.log(index);
 
-  
   pool.query(`SELECT * FROM training WHERE athleteid = ${index}`, (err,result)=> {
     const output = { 
                     data: {
@@ -1174,7 +1169,6 @@ app.get('/coach/:index/rankings', checkAuth, (req,res)=> {
                       index: index
                     }
                   }
-    console.log('output >> ', output.data.result);
       res.render('rankings', output);
   })
 
@@ -1190,7 +1184,6 @@ app.get('/logout', (req,res)=>{
 app.get('/test', (req,res)=> {
   res.render('test');
 }).post('/test', (req,res)=> {
-  console.log(req.body)
 })
 
 app.get('/drag', (req,res)=> {
@@ -1198,7 +1191,7 @@ app.get('/drag', (req,res)=> {
 })
 
 app.get('*', (req,res)=> {
-  app.redirect('404')
+  res.redirect('404')
 })
 
 app.listen(PORT, ()=> console.log(`App running at port ${PORT}`));

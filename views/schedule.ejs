@@ -44,8 +44,8 @@
     position: fixed;
     bottom: 50px;
     right: 50px;
-    width: 100px;
-    height: 100px;
+    width: 4rem;
+    height: 4rem;
     font-size:2rem;
     border-radius: 80px;
     z-index: 999;
@@ -180,7 +180,7 @@
           // borderColor: 'white',
           extendedProps: {
             description: "<%= event.description%>",
-            activitytype : "<%= event.activitytype%>",
+            activitytype : "<%- event.activitytype%>",
             perceivedexertion: "<%= event.perceivedexertion %>",
             distance : "<%= event.distance%>",
             calories : "<%= event.calories%>",
@@ -207,15 +207,36 @@
       },
       eventClick: (info) => {
         console.log('event >> ', info)
+
+        const eventId = document.getElementById('eventid');
+        eventid.value = info.event.id;
+
         const modalTitle = document.getElementById('infoModalTitle');
         modalTitle.innerText = info.event.title;
 
         const modalBody = document.getElementById('infoModalBody');
-        infoactivitylist.value = info.event.extendedProps.activitytype;
-        toggleImg(infoactivitylist.value);
+        infoactivitylist.value = info.event.extendedProps.activitytype.toLowerCase();
+        toggleImg(info.event.extendedProps.activitytype.toLowerCase());
 
         infoperceivedexertion.value = info.event.extendedProps.perceivedexertion;
         infodatecontainer.value = info.event.start;
+        infostartdate.placeholder = info.event.start.toDateString();
+        infotimelist.value = (()=> { 
+          if(info.event.start.getHours().toString().length==1){
+            if(info.event.start.getMinutes().length==1){
+              return '0'+info.event.start.getHours().toString()+':'+'0'+info.event.start.getMinutes().toString();
+            } else {
+              return '0'+info.event.start.getHours().toString()+':'+info.event.start.getMinutes().toString();
+            }
+        } else{
+          if(info.event.start.getMinutes().toString().length==1){
+              return info.event.start.getHours().toString()+':'+'0'+info.event.start.getMinutes().toString();
+            } else {
+              return info.event.start.getHours().toString()+':'+info.event.start.getMinutes().toString();
+            }
+        }
+      })();
+
         infofeelingvalue.value = info.event.extendedProps.feeling
         infoavgpace.value = info.event.extendedProps.avgpace
         infoavghr.value = info.event.extendedProps.avghr
@@ -228,6 +249,10 @@
         infoactualcalories.value = info.event.extendedProps.calories;
         infodescription.value = info.event.extendedProps.description;
         infoModalTitle.value = info.event.title;
+        infotitle.value = info.event.title;
+        infoactivitylist.options.value = info.event.extendedProps.activitytype;
+        infotimetaken.innerHTML = info.event.extendedProps.timetaken;
+        infodistancevalue.innerHTML = info.event.extendedProps.distance;
 
         const infoModal = new bootstrap.Modal(document.getElementById('infoModal'));
         infoModal.toggle();
@@ -254,7 +279,7 @@
             url: '/athlete/<%=data.index%>/schedule',
             data: {
               id: `${info.event.id}`,
-              datetime: `${info.event.start.toISOString()}`,
+              datetime: `${info.event.start.toDateString()}`,
               title: `${info.event.title}`
             }
           }).then((response)=> {console.log(response)});
@@ -308,9 +333,7 @@
                 >  
             </div>
             <div class="col-2">
-              <select name="time" style="border: none;" id="timelist" onblur="(this.type='text')">
-                <option hidden>Enter Time</option>
-              </select>
+              <input type="time" name="time" style="border: none;" placeholder="Enter Time" id="timelist" onblur="(this.type='text')">
             </div>
           </div>
           <!-- overview -->
@@ -406,10 +429,6 @@
           <div class="row" style="position: relative; width:100%; margin-top:10px; margin-left: 10px;">
               <canvas id="newChart" width="900" height="100"></canvas>
           </div>
-
-          <p><button class="append-button">Append items</button></p>
-
-
           <!-- main -->
           <div class="container-fluid">
             <div class="row">
@@ -632,7 +651,8 @@
     </div>
 
     <div class="modal-body" id="infoModalBody">      
-      <form action="schedule/editactivity" method="POST" enctype="multipart/form-data" id="infotrainingform">
+      <form action="schedule/editactivity" method="POST" id="infotrainingform">
+        <input type="text" id="eventid" style="display: none;">
         <div class="row justify-content-start p-3" id="infostartparams">
           <div class="col-2">
             <input type="text" id="infostartdate"
@@ -647,9 +667,7 @@
               >  
           </div>
           <div class="col-2">
-            <select name="time" style="border: none;" id="infotimelist" onblur="(this.type='text')">
-              <option hidden>Enter Time</option>
-            </select>
+            <input type="time" name="time" style="border: none;" placeholder="Enter Time" id="infotimelist" onblur="(this.type='text')">
           </div>
         </div>
         <!-- overview -->
@@ -692,9 +710,6 @@
         <div class="row" style="position: relative; width:100%; margin-left: 10px;">
             <canvas id="viewChart" width="1000" height="100"></canvas>
         </div>
-
-        <p><button class="append-button">Append items</button></p>
-
 
         <!-- main -->
         <div class="container-fluid">

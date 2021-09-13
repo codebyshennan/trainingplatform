@@ -122,7 +122,7 @@
         <div class="list-group list-group-flush border-bottom scrollarea">
 
           <!-- All athletes combined -->
-          <a href="timetable" class="list-group-item list-group-item-action py-3 lh-tight" aria-current="true">
+          <a href="/coach/<%= data.index %>/timetable" class="list-group-item list-group-item-action py-3 lh-tight" aria-current="true">
             <div class="d-flex w-100 align-items-center justify-content-between">
               <strong class="mb-1">All Athletes</strong>
               <small>Coach | <%- data.coachdata[0].fname %> </small>
@@ -132,14 +132,18 @@
 
           <% data.athletedata.forEach( (athlete, index) => { %> 
             <!-- Populates the list with all the athletes -->
-            <a href="/coach/<%= data.index %>/athlete/<%= data.athletedata[index].id %>/timetable" class="list-group-item list-group-item-action py-3 lh-tight">
+            <a href="/coach/<%= data.index %>/athlete/<%= data.athletedata[index].id %>/timetable" id="ath<%= data.athletedata[index].id %>" class="list-group-item list-group-item-action py-3 lh-tight">
               <div class="d-flex w-100 align-items-center justify-content-between">
-                <strong class="mb-1"><%= athlete.fname %> </strong>
-                <small class="text-muted">@<%= athlete.username %> </small>
+                <div class="col-1"><img class="rounded-circle" src="https://img.icons8.com/ios/250/000000/user.png" alt="" style="height:20px"></div>
+                <div class="col-5"> <strong class="mb-1"><%= athlete.fname %> </strong></div>
+               <div class="col-2 mb-1 small"> <%- Math.floor((new Date () - new Date(athlete.birthdate)) /31557600000) %> y.o. </div>
+                <div class="col-4"><small class="text-muted">@<%= athlete.username %> </small></div>
               </div>
-              <div class="col-10 mb-1 small"> <%= athlete.thismonthactivity %> </div>
+              
             </a>
                     <% }) %> 
+            <script>document.getElementById('ath<%=data.athleteid%>').classList.add('active');</script>
+            
         </div>
       </div>
     </div>
@@ -149,8 +153,8 @@
               
         <ol class="breadcrumb">
           <li class="breadcrumb-item">Home</li>
-          <li class="breadcrumb-item"><a href="/coach/<%= data.index %>/timetable ">Athletes</a></li>
-          <li class="breadcrumb-item active"><a href="/coach/<%= data.index %>/athlete/<%= data.athleteid %>/timetable"> <%= data.athleteid %></a> </li>
+          <li class="breadcrumb-item"><a href="/coach/<%= data.index %>/timetable">Athletes</a></li>
+          <li class="breadcrumb-item active"><a href="/coach/<%= data.index %>/athlete/<%= data.athleteid %>/timetable"> <%- data.athleteid ? data.athletedata.filter(athlete => athlete.id == data.athleteid)[0].username : '' %></a> </li>
         </ol>
 
       </div>
@@ -809,259 +813,6 @@
 </div>
 
 
-
-<!-- ChartJS scripts for making new Charts -->
-<script defer>
-  // to insert data
-  // inject into myLineChart.data <- array
-
-  Chart.LineElement.prototype.draw(()=>{
-      Chart.LineElement.prototype.draw().apply(this, arguments);
-
-      this.chart.textAlign = "center"
-      // y value and x index
-      this.chart.fillText("ZONE1", this.scale.calculateX(3.5), this.scale.calculateY(20.75))
-      this.chart.fillText("ZONE2", this.scale.calculateX(11.5), this.scale.calculateY(13))
-      this.chart.fillText("ZONE3", this.scale.calculateX(2), this.scale.calculateY(9.75))
-      this.chart.fillText("ZONE4", this.scale.calculateX(14.5), this.scale.calculateY(22.75))
-    });
-
-const ctx = document.getElementById('newChart');;
-
-// starts with no data
-const data = [
-  {
-    x: 1617253200000,
-    y: 10
-  },
-  {
-    x: 1617256800000,
-    y: 50
-  },
-  {
-    x: 1617260400000,
-    y: 30
-  },
-    {
-    x: 1617260800000,
-    y: 30
-  }
-];
-
-const config = {
-  responsive: true,
-  plugins:{
-    legend:{
-      display: false
-    },
-    title:{
-      display: false
-    },
-    tooltip: {
-      callbacks: {
-        title: function(context) {
-          const timeString = new Date(context[0].parsed.x).toLocaleTimeString(navigator.language, {
-            hour: '2-digit',
-            minute:'2-digit'
-          })
-
-          return timeString
-        }
-      }
-    },
-    dragData: {        
-          round: 0,
-          dragX: false,
-          showTooltip: true,
-          onDragStart:function (e, datasetIndex, index, value) {
-          },
-          onDrag: function (e, datasetIndex, index, value) {
-              e.target.style.cursor = 'grabbing'
-              //console.log("Drag Value: ", value.x)
-          },
-          onDragEnd: function (e, datasetIndex, index, value) {
-              e.target.style.cursor = 'default'
-          },
-      },
-    },
-    scales: {
-        x:{
-          type: 'linear',
-          min: 1617253200000,
-          max: 1617300800000,
-          ticks: {
-            callback(v) {
-              return new Date(v).toLocaleTimeString(navigator.language, {
-                hour: '2-digit',
-                minute:'2-digit'
-              })
-            }
-          }
-        },
-        y:{
-           beginAtZero: true,
-                steps: 1,
-                stepValue: 1,
-                max: 100
-          },
-      }
-};
-
-
-let myLineChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      datasets: [
-        {
-          data:data,
-          fill:true,
-          stepped:true}
-      ]
-    },
-    options: config
-});
-
-
-const button = document.querySelector('.append-button')
-button.addEventListener('click', (e)=> {
-
-  console.log('hi >> ')
-  let util = myLineChart.data.datasets[0].data;
-  const addValue = (xvalue, yvalue) => {
-    const value = {x: xvalue, y: yvalue};
-    util.push(value)
-      // TODO: change the scaling due to input
-  // myLineChart.options.scales.x.min
-  }
-
-  const removeValue = (xvalue, yvalue) => {
-    
-    const indexOfvalue = util.findIndex(element => element.x == xvalue && element.y == yvalue);
-    util.splice(indexOfvalue,1);
-
-    // TODO: change scaling due to removal
-  }
-
-  const getCurrentX = () => {
-    return util[util.length-1].x;
-  }
-
-  console.log(getCurrentX());
-
-  addValue(1617262000000, 100);
-  addValue(1617264000000, 100);
-
-  //mandatory to update chart after addition or removal
-  myLineChart.update();
-
-  // TODO: make min and max the min and max values of the data
-
-
-})
-
-</script>
-
-<!-- ChartJS scripts for viewing old Charts -->
-<script defer>
-  // to insert data
-  // inject into myLineChart.data <- array
-const ctxview = document.getElementById('viewChart');;
-
-// starts with no data
-const dataview = [
-  {
-    x: 1617253200000,
-    y: 10
-  },
-  {
-    x: 1617256800000,
-    y: 50
-  },
-  {
-    x: 1617260400000,
-    y: 30
-  },
-    {
-    x: 1617260800000,
-    y: 30
-  }
-];
-
-const configview = {
-  responsive: true,
-  plugins:{
-    legend:{
-      display: false
-    },
-    title:{
-      display: false
-    },
-    tooltip: {
-      callbacks: {
-        title: function(context) {
-          const timeString = new Date(context[0].parsed.x).toLocaleTimeString(navigator.language, {
-            hour: '2-digit',
-            minute:'2-digit'
-          })
-
-          return timeString
-        }
-      }
-    },
-    dragData: {        
-          round: 0,
-          dragX: false,
-          showTooltip: true,
-          onDragStart:function (e, datasetIndex, index, value) {
-          },
-          onDrag: function (e, datasetIndex, index, value) {
-              e.target.style.cursor = 'grabbing'
-              //console.log("Drag Value: ", value.x)
-          },
-          onDragEnd: function (e, datasetIndex, index, value) {
-              e.target.style.cursor = 'default'
-          },
-      },
-    },
-    scales: {
-        x:{
-          type: 'linear',
-          min: 1617253200000,
-          max: 1617300800000,
-          ticks: {
-            callback(v) {
-              return new Date(v).toLocaleTimeString(navigator.language, {
-                hour: '2-digit',
-                minute:'2-digit'
-              })
-            }
-          }
-        },
-        y:{
-           beginAtZero: true,
-                steps: 1,
-                stepValue: 1,
-                max: 100
-          },
-      }
-};
-
-
-let chartview = new Chart(ctxview, {
-    type: 'line',
-    data: {
-      datasets: [
-        {
-          data:data,
-          fill:true,
-          stepped:true}
-      ]
-    },
-    options: configview
-});
-
-</script>
-
 <script>
   document.addEventListener("DOMContentLoaded", function () {
     const resetFields = () => {
@@ -1090,7 +841,8 @@ let chartview = new Chart(ctxview, {
       longPressDelay: 1000,
       
       events: [
-        <% data.trainingdata.forEach((event) => { %>
+        <% JSON.parse(data.trainingdata).forEach((event) => { %>
+        
         // populate this list from ejs
         {
           id: <%= event.id %>,
@@ -1133,8 +885,27 @@ let chartview = new Chart(ctxview, {
         modalTitle.innerText = info.event.title;
 
         const modalBody = document.getElementById('infoModalBody');
-        infoactivitylist.value = info.event.extendedProps.activitytype;
-        toggleImg(infoactivitylist.value);
+        infoactivitylist.value = info.event.extendedProps.activitytype.toLowerCase();
+        toggleImg(info.event.extendedProps.activitytype.toLowerCase());
+
+        infoperceivedexertion.value = info.event.extendedProps.perceivedexertion;
+        infodatecontainer.value = info.event.start;
+        infostartdate.placeholder = info.event.start.toDateString();
+        infotimelist.value = (()=> { 
+          if(info.event.start.getHours().toString().length==1){
+            if(info.event.start.getMinutes().length==1){
+              return '0'+info.event.start.getHours().toString()+':'+'0'+info.event.start.getMinutes().toString();
+            } else {
+              return '0'+info.event.start.getHours().toString()+':'+info.event.start.getMinutes().toString();
+            }
+        } else{
+          if(info.event.start.getMinutes().toString().length==1){
+              return info.event.start.getHours().toString()+':'+'0'+info.event.start.getMinutes().toString();
+            } else {
+              return info.event.start.getHours().toString()+':'+info.event.start.getMinutes().toString();
+            }
+        }
+      })();
 
         infoperceivedexertion.value = info.event.extendedProps.perceivedexertion;
         infodatecontainer.value = info.event.start;
@@ -1173,17 +944,13 @@ let chartview = new Chart(ctxview, {
             headers: {
               'Content-Type': 'application/json',
             },
-            url: '/athlete/<%=data.index%>/schedule',
+            url: '/athlete/<%=data.athleteid%>/schedule',
             data: {
               id: `${info.event.id}`,
-              datetime: `${info.event.start.toISOString()}`,
+              datetime: `${info.event.start.toDateString()}`,
               title: `${info.event.title}`
             }
           }).then((response)=> {console.log(response)});
-        console.log(info);
-        // if (!confirm("Are you sure about this change?")) {
-        //   info.revert();
-        // }
       }
     });
     calendar.render();

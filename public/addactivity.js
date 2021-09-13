@@ -40,18 +40,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   
 
 
-const button = document.querySelector('.append-button')
-button.addEventListener('click', (e)=> {
-
-  console.log('hi >> ')
-  let util = myLineChart.data.datasets[0].data;
-  const addValue = (xvalue, yvalue) => {
-    const value = {x: xvalue, y: yvalue};
-    util.push(value)
-      // TODO: change the scaling due to input
-  // myLineChart.options.scales.x.min
-  }
-
   const removeValue = (xvalue, yvalue) => {
     
     const indexOfvalue = util.findIndex(element => element.x == xvalue && element.y == yvalue);
@@ -64,16 +52,16 @@ button.addEventListener('click', (e)=> {
     return util[util.length-1].x;
   }
 
-  console.log(getCurrentX());
+  // console.log(getCurrentX());
 
-  addValue(1617262000000, 100);
-  addValue(1617264000000, 100);
+  // addValue(1617262000000, 100);
+  // addValue(1617264000000, 100);
 
   //mandatory to update chart after addition or removal
-  myLineChart.update();
+  // myLineChart.update();
 
   // TODO: make min and max the min and max values of the data
-})
+
 
 
   // Helper functions
@@ -122,16 +110,14 @@ let templateoptions = [];
   // takes in an array of objects
   const constructTemplate = (options) => {
 
-    options.forEach(elem => {
+    options.forEach(obj => {
 
-      const {data, repeats} = elem;
+      const {repeats} = obj;
 
       if(repeats > 1) {
         const fieldset = document.createElement('fieldset')
         const label = document.createElement('label')
       }
-
-      elem.forEach
 
 
       const templatelistitem = document.createElement('li')
@@ -141,7 +127,7 @@ let templateoptions = [];
           templatedetails.classList.add('d-flex','w-100','mb-1','justify-content-between');
           const templateblockheader = document.createElement('h5');
           templateblockheader.classList.add('templateblockheader');
-          templateblockheader.textContent = data.header;
+          templateblockheader.textContent = obj.header;
           const templateremove = document.createElement('small');
           templateremove.classList.add('templateremove');
           templateremove.textContent = 'x'
@@ -154,14 +140,14 @@ let templateoptions = [];
           templatetime.classList.add('col-2');
           const inputtime = document.createElement('input');
           inputtime.classList.add('templatetime')
-          inputtime.value = data.time;
+          inputtime.value = obj.time;
           templatetime.appendChild(inputtime)
 
           const templateminhr = document.createElement('span')
           templateminhr.classList.add('col-1');
           const inputminhr = document.createElement('input');
           inputminhr.classList.add('templateminhr')
-          inputminhr.value = data.minhr;
+          inputminhr.value = obj.minhr;
           templateminhr.appendChild(inputminhr)
 
           const spacer = document.createElement('span');
@@ -173,7 +159,7 @@ let templateoptions = [];
           templatemaxhr.classList.add('col-1');
           const inputmaxhr = document.createElement('input');
           inputmaxhr.classList.add('templatemaxhr')
-          inputmaxhr.value = data.maxhr;
+          inputmaxhr.value = obj.maxhr;
           templatemaxhr.appendChild(inputmaxhr)
 
           const templatehrpercentage = document.createElement('span');
@@ -181,7 +167,7 @@ let templateoptions = [];
           templatehrpercentage.innerHTML = `<strong> % of Maximum Heart Rate </strong>`;
           const templatehr = document.createElement('p')
           templatehr.classList.add('templatehr')
-          templatehr.textContent = data.hrrange + 'bpm'
+          templatehr.textContent = obj.hrrange + 'bpm'
 
           templatehrpercentage.appendChild(templatehr)
 
@@ -203,28 +189,31 @@ let templateoptions = [];
 
     console.log('Updating charts...');
 
-    console.log(templateoptions.data)
-
     // reset the chart
     draggablechart.destroy();
 
     // get the max time
     let starttime = 0;
 
-    const hr = templateoptions.data[templateoptions.data.length-1].maxhr;
+    // get the recently added item's maxhr
+    const hr = templateoptions[templateoptions.length-1].maxhr;
 
-    if(chartdata.length > 0) {
+    if(chartdata.length === 1) {
       starttime = chartdata.reduce((acc, current)=> {
         return Math.max(acc, current.x)
       }, 0)
       chartdata[0].y = hr;
     }
 
+    starttime = chartdata.reduce((acc, current)=> {
+        return Math.max(acc, current.x)
+      }, 0)
 
-    const endtime = starttime + gettime(templateoptions.data[templateoptions.data.length-1].time);
-
-    const datainput = {x: endtime, y: hr};
-    chartdata.push(datainput);
+    const endtime = starttime + gettime(templateoptions[templateoptions.length-1].time);
+    
+    const firstdatainput = {x: starttime, y:hr}
+    const seconddatainput = {x: endtime, y: hr};
+    chartdata.push(firstdatainput, seconddatainput);
 
     draggablechart = new Chart(ctx, {
     type: 'line',
@@ -244,11 +233,11 @@ let templateoptions = [];
 
   warmuptemplate.addEventListener('click', (ev)=>{ 
     
-    const warmupdata = [{data: {header: 'Warm-up', time:'0:20:00', minhr:'60', maxhr:'80', hrrange:'106-120'}, repeats:0}]
+    const warmupdata = [{header: 'Warm-up', time:'0:20:00', minhr:'60', maxhr:'80', hrrange:'106-120', repeats:0}]
     console.log('insert warmup');
 
-      warmupdata.data.forEach(data => {
-        templateoptions.data.push(data);
+      warmupdata.forEach(data => {
+        templateoptions.push(data);
       })
       updateChart();
 
@@ -270,20 +259,13 @@ let templateoptions = [];
 
   activetemplate.addEventListener('click', (ev)=>{
 
-    const activedata = {data: [{header: 'Active', time:'0:10:00', minhr:'89', maxhr:'98', hrrange:'157-172'}], repeats:0 };
+    const activedata = [{header: 'Active', time:'0:10:00', minhr:'89', maxhr:'98', hrrange:'157-172', repeats:0}]
     console.log('insert active');
 
-    if (templateoptions.data.length===0) {
-      templateoptions = {
-        data: [activedata.data], 
-        repeats: activedata.repeats }
-      updateChart();
-    } else {
-      activedata.data.forEach( data => {
-        templateoptions.data.push(data);
+      activedata.forEach( data => {
+        templateoptions.push(data);
       })
       updateChart();
-    }
 
     const injecthtml = async ()=> {
       templatecontainer.innerHTML = ''
@@ -300,21 +282,27 @@ let templateoptions = [];
       timetaken.innerText = plannedtime.value;
     })
 
-
-
   })
 
   recoverytemplate.addEventListener('click', (ev)=>{
 
 
-    const options = {data:[{header: 'Active', time:'0:05:00', minhr:'50', maxhr:'60', hrrange:'88-106'}], repeats:0}
+    const recoverydata = [{header: 'Recovery', time:'0:05:00', minhr:'50', maxhr:'60', hrrange:'88-106', repeats:0}]
+    console.log('insert recovery');
+
+      recoverydata.forEach( data => {
+        templateoptions.push(data);
+      })
+      updateChart();
+
     const injecthtml = async ()=> {
-      const active = constructTemplate(options);
+      templatecontainer.innerHTML = ''
+      constructTemplate(templateoptions);
     ;}
-    
+
     injecthtml().then((val)=> {
-      const templatetime = document.getElementsByClassName('templatetime');
-      let newtime = gettime(plannedtime);
+      const templatetime = [...document.getElementsByClassName('templatetime')];
+      let newtime = 0;
       for(let x=0; x<templatetime.length;x++){
         newtime += gettime(templatetime[x])
       }
@@ -324,33 +312,30 @@ let templateoptions = [];
   })
 
   cooldowntemplate.addEventListener('click', (ev)=>{
+
+    const cooldowndata = [{header: 'Cool-down', time:'0:10:00', minhr:'40', maxhr:'50', hrrange:'70-88', repeats:0}]
+    console.log('insert cooldown');
+
+      cooldowndata.forEach( data => {
+        templateoptions.push(data);
+      })
+      updateChart();
+
     const injecthtml = async ()=> {
-      templatecontainer.innerHTML +=
-        `<a href='#' class='list-group-item list-group-item-action'>
-          <div class='d-flex w-100 mb-1 justify-content-between'>
-            <h5 class='templateblockheader'>Cool-down</h5>
-            <small class='templateremove'>Remove block</small></div>
-          <span class='d-flex row w-100 mb-1" class='templateblockdetails'>
-            <span class="col-2"><input type='text' class='templatetime' value="0:10:00" style='border:none;font-size:2rem;width:100px'></span>
-            <span class="col-1"><input type='text' class='templateminhr' value="40" style='border:none;font-size:2rem;width:50px'></span> 
-            <span class="col-1" style="font-size:2rem; text-align:center"><strong>-</strong></span> 
-            <span class="col-1"><input type='text' class='templatemaxhr' value="50" style='border:none;font-size:2rem;width:50px'></span>
-            <span class="col-4"> 
-              <strong>% of Maximum Heart Rate</strong>
-              <p class='templatehr'>70-88bpm</p>
-            </span>
-        </a>`
-        ;}
-    
+      templatecontainer.innerHTML = ''
+      constructTemplate(templateoptions);
+    ;}
+
     injecthtml().then((val)=> {
-      const templatetime = document.getElementsByClassName('templatetime');
-      let newtime = gettime(plannedtime);
+      const templatetime = [...document.getElementsByClassName('templatetime')];
+      let newtime = 0;
       for(let x=0; x<templatetime.length;x++){
         newtime += gettime(templatetime[x])
       }
       plannedtime.value = validateTime(toTimeStr(newtime));
       timetaken.innerText = plannedtime.value;
     })
+
   })
 
   twosteptemplate.addEventListener('click', (ev)=>{
@@ -669,17 +654,6 @@ let templateoptions = [];
       e.target.value = "";
       e.target.type='text';
   }, true)
-
-  for(let j=0;j<2;j++){
-    for(let i = 0; i<12; i++){
-      for(int in interval) {
-        
-        timelist.add(new Option
-        ((i==0?12:i).toString() + ':'+ interval[int] + ' '+ meridiem[j], 
-        i.toString() + ':' + interval[int]))
-      }
-    }
-  }
 
   activitylist.addEventListener('change', (e)=>{
     console.log('change')

@@ -2,7 +2,7 @@
 <script src="https://cdn.jsdelivr.net/npm/luxon@2.0.2/build/global/luxon.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.5.1/chart.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.1"></script>
-<script src="/static/chart.js" defer></script>
+<script src="/static/chartjs-dragdata.js"></script>
 
 <style>
 </style>
@@ -51,7 +51,7 @@
 <div class="tab-content" id="myTabContent">
   <!-- Home Tab -->
   <div
-    class="tab-pane fade show active"
+    class="tab-pane fade show active ms-3 mt-3"
     id="home"
     role="tabpanel"
     aria-labelledby="home-tab"
@@ -65,13 +65,14 @@
             <div class="col-1"></div>
           </div>
           <hr>
-          <div class="d-flex row align-items-center" >
+          <div class="d-flex row align-items-center mb-3" >
             <br>
             <div class="col-2 d-flex align-items-center" style="min-height:100px;">
               <i class="fas fa-award p-3" style="font-size: 2rem"></i>
             </div>
-            <div class="col-10">What are you training for</div>
+            <div class="col-10"><p>What are you training for? </p><button class="btn btn btn-outline-secondary" type="button">Add Event</button></div>
           </div>
+          
           <div class="row">
             <div class="col-1"><i class="fas fa-check"></i></div>
             <div class="col-10">Goals</div>
@@ -79,15 +80,15 @@
             <hr>
           </div>
           
-          <div class="row">Stay on Track by adding your training goals</div>
-          <div class="row">
+          <div class="row mb-3">Stay on Track by adding your training goals</div>
+          <div class="row mb-2">
 
             <div id="todocontainer">
-              <% JSON.parse(data.todolist).forEach( x => { %> 
-              <div class="row"> 
-                <div class="col-11">- <%- x.todo %></div> 
-                <div class="col-1">
-                  <button type="button removetodo" class="btn btn-light" id="<%- x.id %>">
+              <% data.todolist.forEach( x => { %> 
+              <div class="row mb-1" id="r<%- x.id %>"> 
+                <div class="col-10">- <%- x.todo %></div> 
+                <div class="col-2">
+                  <button type="button" class="btn btn-outline-light removetodo" id="<%- x.id %>">
                     <span><i class="far fa-trash-alt"></i></span>
                 </div>
               </div>
@@ -98,8 +99,8 @@
               <form id="todoform">
                 <label class="list-group-item">
                   <div class="row">
-                    <div class="col-9"><input type="text" class="form-control" value="" style="border:none;" id="input"></div>
-                    <div class="d-flex col-3 justify-content-center align-items-center">
+                    <div class="col-10"><input type="text" class="form-control" value="" style="border:none;" id="input"></div>
+                    <div class="d-flex col-2 justify-content-center align-items-center">
                       <button type="button" class="btn btn-light" id="createtodo"><span><i class="fas fa-plus"></i></span></button>
                       <span style="margin-left:10px">   </span>
                     </div>
@@ -130,14 +131,14 @@
                     class="list-group-item list-group-item-action"
                     aria-current="true"
                   >
-                    <div class="d-flex w-100 justify-content-between">
+                    <div class="d-flex w-100 justify-content-between" onclick="toggleInfoModal(this)">
                       <h5 class="mb-1"><strong><%= trg.title %> </strong> | <%= trg.timetaken %> | <%= trg.distance %>km   </h5>
                       <small><%= trg.activitytype %> </small>
                     </div>
                     <p class="mb-1"><%= trg.description %> </p>
                     <small> Avg HR <%= trg.avghr %> | Avg Pace <%= trg.avgpace %>km/h  </small>
                   </a>
-                
+               
               <% }) %>
               <% } %> 
               </div>
@@ -171,7 +172,7 @@
               <div class="card border-secondary mb-3">
                 <div class="card-header">All-time Distance</div>
                 <div class="card-body">
-                  <h4 class="card-title"><%= data.alltimedistance %>km </h4>
+                  <h4 class="card-title"><%- Math.round(data.alltimedistance) %>km </h4>
                 </div>
               </div>
             </div>
@@ -234,51 +235,849 @@
 
   <!-- Stats Tab -->
   <div
-    class="tab-pane fade"
+    class="tab-pane fade ms-3 mt-3"
     id="profile"
     role="tabpanel"
     aria-labelledby="profile-tab"
   >
-    <div
-      class="chart-container"
-      style="position: relative; height: 40vh; width: 40vw"
-    >
-      <canvas id="testchart"></canvas>
-      <div
-        class="modal fade"
-        id="exampleModalToggle"
-        aria-hidden="true"
-        aria-labelledby="exampleModalToggleLabel"
-        tabindex="-1"
-      >
+  <div class="container">
+    <div class="row mb-4">
+      <div class="d-flex col justify-content-center align-items-center">
+        <div
+          class="chart-container"
+          style="position: relative; height: 250px; width: 400px"
+        >
+        <h4>Calories By Sport (kCal)</h4>
+          <canvas id="caloriebysport"></canvas>
+        </div>
+      </div>
+      <div class="d-flex col justify-content-center align-items-center">
+        <div
+          class="chart-container"
+          style="position: relative; height: 250px; width: 400px"
+        >
+        <h4>Distance By Sport (km)</h4>
+          <canvas id="distancebysport"></canvas>
+        </div>
+      </div>
+      <div class="d-flex col justify-content-center align-items-center">
+        <div
+          class="chart-container"
+          style="position: relative; height: 250px; width: 400px"
+        >
+        <h4>Duration By Sport (mins)</h4>
+          <canvas id="durationbysport"></canvas>
+        </div>
       </div>
     </div>
+
+    <div class="row">
+      <div class="d-flex col justify-content-center align-items-center">
+       <div
+          class="chart-container"
+          style="position: relative; text-align:center;height: 250px; width: 250px"
+        >
+        <h4>Average Pace By Sport (m/min)</h4>
+          <canvas id="avgpacebysport"></canvas>
+        </div>
+      </div>
+      <div class="d-flex col justify-content-center align-items-center">
+        <div
+          class="chart-container"
+          style="position: relative; text-align:center;height: 250px; width: 250px"
+        >
+        <h4>Activity Count By Sport </h4>
+          <canvas id="activitytypetally"></canvas>
+        </div>
+      </div>
+      <div class="d-flex col justify-content-center align-items-center">
+        <div
+          class="chart-container"
+          style="position: relative; text-align:center;height: 250px; width: 250px"
+        >
+        <h4>Average HR By Sport (bpm) </h4>
+          <canvas id="avghrbysport"></canvas>
+        </div>
+
+      </div>
+
+    </div>
   </div>
+</div>
 
   <!-- Bests Tab -->
   <div
-    class="tab-pane fade"
+    class="tab-pane fade ms-3 mt-3"
     id="contact"
     role="tabpanel"
     aria-labelledby="contact-tab"
   >
+
+  <table class="table table-hover caption-top">
+  <caption>All Time Bests</caption>
+  <thead>
+    <tr>
+      <th scope="col"></th>
+      <th scope="col">Longest Distance</th>
+      <th scope="col">Longest Duration</th>
+      <th scope="col">Highest Avg HR</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <th scope="row"><i class="fas fa-medal" value="1" style="color:gold; font-size:2rem"></i></th>
+      <td>      
+        <div class="card border-light mb-3" style="max-width: 20rem;">
+        <div class="card-header"><%= data.topthreedistance[0].title %> </div>
+        <div class="card-body">
+          <h4 class="card-title"><%= data.topthreedistance[0].distance %>km </h4>
+          <p class="card-text"><%= data.topthreedistance[0].activitytype %> on 
+            <br><%- new Date(data.topthreedistance[0].datetime).toString().substr(0,24) %>  </p>
+        </div>
+      </div></td>
+      <td><div class="card border-light mb-3" style="max-width: 20rem;">
+        <div class="card-header"><%= data.topthreetimetaken[0].title %> </div>
+        <div class="card-body">
+          <h4 class="card-title"><%= data.topthreetimetaken[0].timetaken %> </h4>
+          <p class="card-text"><%= data.topthreetimetaken[0].activitytype %> on  <br><%- new Date(data.topthreetimetaken[0].datetime).toString().substr(0,24) %>  </p>
+        </div></td>
+      <td>
+        <div class="card border-light mb-3" style="max-width: 20rem;">
+        <div class="card-header"><%= data.topthreeavghr[0].title %> </div>
+        <div class="card-body">
+          <h4 class="card-title"><%- Math.round(data.topthreeavghr[0].avghr) %>bpm </h4>
+          <p class="card-text"><%= data.topthreeavghr[0].activitytype %> on  <br><%- new Date(data.topthreeavghr[0].datetime).toString().substr(0,24) %>  </p>
+        </div>
+      </td>
+    </tr>
+
+    <tr>
+      <th scope="row"><i class="fas fa-medal" value="2" style="color: silver; font-size:2rem"></i></th>
+      <td>      
+        <div class="card border-light mb-3" style="max-width: 20rem;">
+        <div class="card-header"><%= data.topthreedistance[1].title %> </div>
+        <div class="card-body">
+          <h4 class="card-title"><%= data.topthreedistance[1].distance %>km </h4>
+          <p class="card-text"><%= data.topthreedistance[1].activitytype %> on  <br><%- new Date(data.topthreedistance[1].datetime).toString().substr(0,24) %>  </p>
+        </div>
+      </div></td>
+      <td>
+        <div class="card border-light mb-3" style="max-width: 20rem;">
+        <div class="card-header"><%= data.topthreetimetaken[1].title %> </div>
+        <div class="card-body">
+          <h4 class="card-title"><%= data.topthreetimetaken[1].timetaken %> </h4>
+          <p class="card-text"><%= data.topthreetimetaken[1].activitytype %> on  <br><%- new Date(data.topthreetimetaken[1].datetime).toString().substr(0,24) %>  </p>
+        </div>
+      </td>
+      <td>
+        <div class="card border-light mb-3" style="max-width: 20rem;">
+        <div class="card-header"><%= data.topthreeavghr[1].title %> </div>
+        <div class="card-body">
+          <h4 class="card-title"><%- Math.round(data.topthreeavghr[1].avghr) %>bpm </h4>
+          <p class="card-text"><%= data.topthreeavghr[1].activitytype %> on  <br><%- new Date(data.topthreeavghr[1].datetime).toString().substr(0,24) %>  </p>
+        </div>
+      </td>
+    </tr>
+
+    <tr>
+      <th scope="row"><i class="fas fa-medal" value="3" style="color: brown; font-size:2rem"></i></th>
+      <td>      
+        <div class="card border-light mb-3" style="max-width: 20rem;">
+        <div class="card-header"><%= data.topthreedistance[2].title %> </div>
+        <div class="card-body">
+          <h4 class="card-title"><%= data.topthreedistance[2].distance %>km </h4>
+          <p class="card-text"><%= data.topthreedistance[2].activitytype %> on  <br><%- new Date(data.topthreedistance[2].datetime).toString().substr(0,24) %>  </p>
+        </div>
+      </div></td>
+      <td><div class="card border-light mb-3" style="max-width: 20rem;">
+        <div class="card-header"><%= data.topthreetimetaken[2].title %> </div>
+        <div class="card-body">
+          <h4 class="card-title"><%= data.topthreetimetaken[2].timetaken %> </h4>
+          <p class="card-text"><%= data.topthreetimetaken[2].activitytype %> on  <br><%- new Date(data.topthreetimetaken[2].datetime).toString().substr(0,24) %>  </p>
+        </div></td>
+      <td>
+       <div class="card border-light mb-3" style="max-width: 20rem;">
+        <div class="card-header"><%= data.topthreeavghr[2].title %> </div>
+        <div class="card-body">
+          <h4 class="card-title"><%- Math.round(data.topthreeavghr[2].avghr) %>bpm </h4>
+          <p class="card-text"><%= data.topthreeavghr[2].activitytype %> on  <br><%- new Date(data.topthreeavghr[2].datetime).toString().substr(0,24) %>  </p>
+        </div></td>
+    </tr>
+  </tbody>
+</table>
     <!-- todo: get the longest distance clocked -->
     <!-- todo: get the highest heart rates -->
     <!-- todo: get the highest calories in an activity -->
   </div>
 </div>
 
-<script>
+
+<div id="makeNewModal" class="modal fade">
+  <div class="modal-dialog modal-custom-addactivity modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 id="makeNewModalTitle" class="modal-title">Add New Activity</h4>
+        <button type="button" class="close" data-bs-dismiss="modal">
+          <span aria-hidden="true">×</span>
+          <span class="sr-only">close</span>
+        </button>
+      </div>
+
+      <div id="makeNewModalBody" class="modal-body">
+        <form action="schedule/addactivity" method="POST" enctype="multipart/form-data" id="trainingform">
+          <div class="row justify-content-start" id="startparams" style="padding:10px 10px 10px 10px;">
+            <div class="col-2">
+              <input type="text" id="startdate"
+              placeholder = "Fri 5 Sep 2021"
+              datavalue=""
+              value=""
+              style="border: none; "
+                >
+              <input type="text" id="datecontainer" name="startdate"
+              value=""
+              style="display:none "
+                >  
+            </div>
+            <div class="col-2">
+              <select name="time" style="border: none;" id="timelist" onblur="(this.type='text')">
+                <option hidden>Enter Time</option>
+              </select>
+            </div>
+          </div>
+          <!-- overview -->
+          <div class="row" id = "builderoptions">
+            <div class="col" >
+              <div class="row" id = "workoutdetails" style="margin-left:10px">
+                <div class="col-10 p-3" id="workoutcard" > 
+                  <input type="text" name="title" id="title" value="Untitled Workout" style="border: none; width: 100%; margin-left:10px">
+                  <div class="row justify-content-center align-items-center" style="height: 100px">
+                    <div class="col-2 " id="activitytype">
+                      -
+                    </div>
+                    <div class="col-1">
+                      <select name="activitytype" style="border: none;width:20px" id="activitylist">
+                          <option hidden></option>
+                          <option value="Running"> Running </option>
+                          <option value="Swimming"> Swimming </option>
+                          <option value="Cycling"> Cycling </option>
+                          <option value="Gym"> Gym </option>
+                        </select>
+                    </div>
+                    <div class="col-3" style="font-size: 2rem;">
+                      <span id="timetaken">--:--:--</span>
+                    </div>
+                    <div class="col-3" style="font-size: 2rem;">
+                      <span id="distancevalue">--</span> <span id="distanceunit"> km</span>
+                    </div>
+                    <div class="col-1" style="font-size: 2rem;" id="feelingvalue">
+                    </div>
+                  </div>
+                </div>
+                <div class="col-2">
+                  <div class="row">
+                    <p></p>
+                  </div>
+                  <div class="row text-center" > 
+                    <span style="font-size: 0.8rem;">These formats are accepted:</span>
+                    <br>
+                    <span style="font-size: 1rem">.tcx | .gpx | .fit</span>
+                  </div>
+                  <div class="row" style="padding:0 10px 0 10px;">
+                    <label for="trainingfile" class="uploadbutton">
+                      <i class="fas fa-file-upload"></i> Upload
+                    </label>
+                    <input type="file" name="trainingfile" id="trainingfile">
+                  </div>
+                  <div class="row" style="position:relative;padding:0 10px 0 10px;width: 180px;max-height:50px; word-break: break-all;overflow-y:hidden" id='filepath'>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col">
+              <div class="row">
+                <div class="col-8 " style="padding:10px 10px 10px 10px;">
+                  <p></p>
+                  <div class="d-flex row text-center align-content-center">
+                    <p>Click on blocks to build workout</p></div>
+                  <div class="row justify-content-center text-center align-middle" style="font-size:1rem">
+                    <div class="col createtemplate" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;" id="warmuptemplate">
+                      <span class"align-middle"><i class="fas fa-chart-area"></i> Warm-up</span>    
+                    </div>
+                    <div class="col createtemplate" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;" id="activetemplate">
+                      <span class"align-middle"><i class="fas fa-chart-area"></i> Active</span>    
+                    </div>
+                    <div class="col createtemplate" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;" id="recoverytemplate">
+                      <span class"align-middle"><i class="fas fa-chart-area"></i> Recovery</span>    
+                    </div>
+                    <div class="col createtemplate" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;" id="cooldowntemplate">
+                      <span class"align-middle"><i class="fas fa-chart-area"></i> Cool-down</span>    
+                    </div>
+                  </div>
+                  <div class="row justify-content-center text-center align-middle" style="font-size:1rem" >
+                    <div class="col createtemplate" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;" id="twosteptemplate">
+                      <span class"align-middle"><i class="fas fa-chart-area"></i> Two-Step Repeats</span>    
+                    </div>
+                    <div class="col createtemplate" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;" id="threesteptemplate">
+                      <span class"align-middle"><i class="fas fa-chart-area"></i> Three-Step Repeats</span>    
+                    </div>
+                    <div class="col createtemplate" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;" id="rampuptemplate">
+                      <span class"align-middle"><i class="fas fa-chart-area"></i> Ramp Up</span>    
+                    </div>
+                    <div class="col createtemplate" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;" id="rampdowntemplate">
+                      <span class"align-middle"><i class="fas fa-chart-area"></i> Ramp Down</span>    
+                    </div>
+                  </div>
+                </div>
+                <div class="col-4">Units</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ChartJS -->
+          <div class="row" style="position: relative; width:100%; margin-top:10px; margin-left: 10px;">
+              <canvas id="newChart" width="900" height="100"></canvas>
+          </div>
+
+          <p><button class="append-button">Append items</button></p>
+
+
+          <!-- main -->
+          <div class="container-fluid">
+            <div class="row">
+            <!-- planned/completed -->
+              <div class="col-6">
+                <div class="row">
+
+                  <!-- split between form entry and workout editor -->
+                    <div class="col-6" id="formentry">
+
+                      <!-- start of form entry -->
+                      <div class="row text-center d-flex align-items-center p-2">
+                        <div class="col-2"></div>
+                        <div class="col-4"><strong>Planned</strong></div>
+                        <div class="col-4"><strong>Completed</strong></div>
+                        <div class="col-2"></div>
+                        
+                      </div>
+                      <!-- Duration -->
+                      <div class="d-flex row align-items-center mb-3">
+                        <div class="col-2 text-end ">
+                          Duration
+                        </div>
+                        <div class="col-4">
+                          <input class="form-control" type="text" id="plannedtime" name="plannedtime"/>
+                        </div>
+                        <div class="col-4">
+                          <input class="form-control" type="text" id="actualtimetaken" name="actualtimetaken"/>
+                        </div>
+                        <div class="col-2 text-start">
+                          h:m:s
+                        </div>
+                      </div>
+
+                      <!-- Distance -->
+                      <div class="d-flex row align-items-center mb-3">
+                        <div class="col-2 text-end ">
+                          Distance
+                        </div>
+                        <div class="col-4">
+                          <input class="form-control" type="text" id="planneddistance" name="planneddistance"/>
+                        </div>
+                        <div class="col-4">
+                          <input class="form-control" type="text" id="actualdistance" name="actualdistance"/>
+                        </div>
+                        <div class="col-2 text-start">
+                          km
+                        </div>
+                      </div>
+
+                      <!-- Average Pace -->
+                      <div class="d-flex row align-items-center mb-3">
+                        <div class="col-2 text-end ">
+                          Average Pace
+                        </div>
+                        <div class="col-4">
+                          <input class="form-control" type="text" id="plannedavgpace" name="plannedavgpace" readonly/>
+                        </div>
+                        <div class="col-4">
+                          <input class="form-control" type="text" id="actualavgpace" name="actualavgpace" readonly/>
+                        </div>
+                        <div class="col-2 text-start">
+                          km/h
+                        </div>
+                      </div>
+
+                      <!-- Calories -->
+                      <div class="d-flex row align-items-center mb-3">
+                        <div class="col-2 text-end ">
+                          Calories
+                        </div>
+                        <div class="col-4">
+                          <input class="form-control" type="text" id="plannedcalories" name="plannedcalories"/>
+                        </div>
+                        <div class="col-4">
+                          <input class="form-control" type="text" id="actualcalories" name="actualcalories"/>
+                        </div>
+                        <div class="col-2 text-start">
+                          kcal
+                        </div>
+                      </div>
+
+                      <!-- HR -->
+                      <div class="row text-center d-flex align-items-center mb-3">
+                        <div class="col-2"></div>
+                        <div class="col"><strong>Min</strong></div>
+                        <div class="col"><strong>Avg</strong></div>
+                        <div class="col"><strong>Max</strong></div>
+                        <div class="col-2"></div>
+                      </div>
+
+                      <!-- HeartRate -->
+                      <div class="d-flex text-center  row align-items-center mb-3">
+                        <div class="col-2 text-end ">
+                          Heart Rate
+                        </div>
+                        <div class="col">
+                          <input class="form-control" type="text" id="minhr" name="minhr"/>
+                        </div>
+                        <div class="col">
+                          <input class="form-control" type="text" id="avghr" name="avghr"/>
+                        </div>
+                        <div class="col">
+                          <input class="form-control" type="text" id="maxhr" name="maxhr"/>
+                        </div>
+                        <div class="col-2 text-start">
+                          bpm
+                        </div>
+                      </div>
+                            
+                      <!-- Pace -->
+                      <div class="d-flex row align-items-center">
+                        <div class="col-2 text-end ">
+                          Pace
+                        </div>
+                        <div class="col">
+                          <input class="form-control" type="text" id="minpace" name="minpace"/>
+                        </div>
+                        <div class="col">
+                          <input class="form-control" type="text" id="avgpace" name="avgpace" readonly/>
+                        </div>
+                        <div class="col">
+                          <input class="form-control" type="text" id="maxpace" name="maxpace"/>
+                        </div>
+                        <div class="col-2 text-start">
+                          sec / 100m
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="d-flex col-6 flex-column">
+                      <div class="row p-2 mb-3">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" type="textarea" id="description" name="description"></textarea>
+                      </div>
+                      
+                      <label for="smileyrange">How do you feel?</label>
+                      <div class="row mb-3" id="smileyrange">
+
+                        <div class="col smileys">
+                          <label>           
+                            <input type="radio" class="smiley form-control" name="feeling" value ="5"><i class="far fa-grin-hearts smiley" style="font-size:2rem"></i></button>
+                          </label>
+                        </div>
+                        
+                        <div class="col smileys">
+                          <label>           
+                            <input type="radio" class="smiley form-control" name="feeling" value ="4"><i class="far fa-grin smiley" style="font-size:2rem"></i></button>
+                          </label>
+                        </div>
+                        
+                        <div class="col smileys">
+                          <label>           
+                            <input type="radio" class="smiley form-control" name="feeling" value ="3"><i class="far fa-meh smiley" style="font-size:2rem"></i></button>
+                          </label>
+                        </div>
+                        
+                        <div class="col smileys">
+                          <label>           
+                            <input type="radio" class="smiley form-control" name="feeling" value ="2"><i class="far fa-sad-tear smiley" style="font-size:2rem"></i></button>
+                            </label>
+                        </div>
+                        
+                        <div class="col smileys">
+                          <label>           
+                            <input type="radio" class="smiley form-control" name="feeling" value ="1"><i class="far fa-sad-cry smiley" style="font-size:2rem"></i></button>
+                          </label>
+                        </div>
+                        
+                      </div>
+
+                      <div class="row form-group p-2">
+                        <label for="perceivedexertion" class="form-label">Perceived Exertion</label>
+                        <input type="range" class="form-range" min="1" max="10" id="perceivedexertion" name="perceivedexertion">
+                      </div>
+
+                      <div class="row p-2 text-center mb-3" id="rangevalue" style="height:2rem">
+                      </div>
+
+                      <div class="row form-group p-2">
+                        <label for="comments" class="form-label">Post Activity Comments</label>
+                        <textarea class="form-control" name="comments" id="comments" rows="5"></textarea>
+                      </div>
+                    </div>
+
+                </div>
+              </div>
+              <div class="col-6" id="workoutbuilder">Workout Details Editor
+                <hr>
+                <div class="row" id="workoutcontainer" style="max-height:400px;overflow:auto;">
+                  <ol id="templatecontainer">
+
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        </form> 
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" form="trainingform" class="btn btn-primary" value="submit">Save changes</button>
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Info Modal -->
+<div id="infoModal" class="modal fade">
+<div class="modal-dialog modal-custom-viewactivity modal-dialog-centered modal-dialog-scrollable">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h4 class="modal-title" id="infoModalTitle"></h4>
+      <button type="button" class="close" data-bs-dismiss="modal">
+          <span aria-hidden="true">×</span>
+          <span class="sr-only">close</span>
+        </button>
+    </div>
+
+    <div class="modal-body" id="infoModalBody">      
+      <form action="schedule/editactivity" method="POST" enctype="multipart/form-data" id="infotrainingform">
+        <div class="row justify-content-start p-3" id="infostartparams">
+          <div class="col-2">
+            <input type="text" id="infostartdate"
+            placeholder = "Fri 5 Sep 2021"
+            datavalue=""
+            value=""
+            style="border: none; "
+              >
+            <input type="text" id="infodatecontainer" name="infostartdate"
+            value=""
+            style="display:none "
+              >  
+          </div>
+          <div class="col-2">
+            <select name="time" style="border: none;" id="infotimelist" onblur="(this.type='text')">
+              <option hidden>Enter Time</option>
+            </select>
+          </div>
+        </div>
+        <!-- overview -->
+        <div class="row" id = "infobuilderoptions">
+          <div class="col" >
+            <div class="row" id = "infoworkoutdetails">
+              <div class="col p-3 m-3" id="infoworkoutcard" style="border-radius:8px"> 
+                <input type="text" name="title"  id="infotitle" value="Untitled Workout" style="border: none; width: 100%; margin-left:10px">
+                <div class="row justify-content-center align-items-center" style="height: 100px">
+                  <div class="col-2 " id="infoactivitytype">
+                    Select Activity
+                  </div>
+                  <div class="col-1">
+                    <select name="infoactivitytype" style="border: none;width:20px" id="infoactivitylist">
+                        <option hidden></option>
+                        <option value="running"> Running </option>
+                        <option value="swimming"> Swimming </option>
+                        <option value="cycling"> Cycling </option>
+                        <option value="gym"> Gym </option>
+                    </select>
+                  </div>
+                  <div class="col-3" style="font-size: 2rem;">
+                    <span id="infotimetaken">--:--:--</span>
+                  </div>
+                  <div class="col-3" style="font-size: 2rem;">
+                    <span id="infodistancevalue">--</span> <span id="infodistanceunit"> km</span>
+                  </div>
+                  <div class="col-1" style="font-size: 2rem;" id="infofeelingvalue">
+                  </div>
+                </div>
+
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- packery -->
+        <div class="row" style="position: relative; width:100%; margin-left: 10px;">
+            <canvas id="viewChart" width="1000" height="100"></canvas>
+        </div>
+
+        <p><button class="append-button">Append items</button></p>
+
+
+        <!-- main -->
+        <div class="container-fluid">
+          <div class="row m-3">
+          <!-- planned/completed -->
+            <div class="col">
+              <div class="row">
+
+                <!-- split between form entry and workout editor -->
+                  <div class="col-6" id="infoformentry">
+
+                    <!-- start of form entry -->
+                    <div class="row text-center d-flex align-items-center p-2">
+                      <div class="col-2"></div>
+                      <div class="col-4"><strong>Planned</strong></div>
+                      <div class="col-4"><strong>Completed</strong></div>
+                      <div class="col-2"></div>
+                      
+                    </div>
+                    <!-- Duration -->
+                    <div class="d-flex row align-items-center mb-2">
+                      <div class="col-2 text-end ">
+                        Duration
+                      </div>
+                      <div class="col-4">
+                        <input class="form-control" type="text" id="infoplannedtime" name="infoplannedtime"/>
+                      </div>
+                      <div class="col-4">
+                        <input class="form-control" type="text" id="infoactualtimetaken" name="infoactualtimetaken"/>
+                      </div>
+                      <div class="col-2 text-start">
+                        h:m:s
+                      </div>
+                    </div>
+
+                    <!-- Distance -->
+                    <div class="d-flex row align-items-center mb-2">
+                      <div class="col-2 text-end ">
+                        Distance
+                      </div>
+                      <div class="col-4">
+                        <input class="form-control" type="text" id="infoplanneddistance" name="infoplanneddistance"/>
+                      </div>
+                      <div class="col-4">
+                        <input class="form-control" type="text" id="infoactualdistance" name="infoactualdistance"/>
+                      </div>
+                      <div class="col-2 text-start">
+                        km
+                      </div>
+                    </div>
+
+                    <!-- Average Pace -->
+                    <div class="d-flex row align-items-center mb-2">
+                      <div class="col-2 text-end ">
+                        Average Pace
+                      </div>
+                      <div class="col-4">
+                        <input class="form-control" type="text" id="infoplannedavgpace" name="infoplannedavgpace" readonly/>
+                      </div>
+                      <div class="col-4">
+                        <input class="form-control" type="text" id="infoactualavgpace" name="infoactualavgpace" readonly/>
+                      </div>
+                      <div class="col-2 text-start">
+                        km/h
+                      </div>
+                    </div>
+
+                    <!-- Calories -->
+                    <div class="d-flex row align-items-center mb-2">
+                      <div class="col-2 text-end ">
+                        Calories
+                      </div>
+                      <div class="col-4">
+                        <input class="form-control" type="text" id="infoplannedcalories" name="infoplannedcalories"/>
+                      </div>
+                      <div class="col-4">
+                        <input class="form-control" type="text" id="infoactualcalories" name="infoactualcalories"/>
+                      </div>
+                      <div class="col-2 text-start">
+                        kcal
+                      </div>
+                    </div>
+
+                    <!-- HR -->
+                    <div class="row text-center d-flex align-items-center mb-2">
+                      <div class="col-2"></div>
+                      <div class="col"><strong>Min</strong></div>
+                      <div class="col"><strong>Avg</strong></div>
+                      <div class="col"><strong>Max</strong></div>
+                      <div class="col-2"></div>
+                    </div>
+
+                    <!-- HeartRate -->
+                    <div class="d-flex text-center row align-items-center mb-2">
+                      <div class="col-2 text-end ">
+                        Heart Rate
+                      </div>
+                      <div class="col">
+                        <input class="form-control" type="text" id="infominhr" name="minhr"/>
+                      </div>
+                      <div class="col">
+                        <input class="form-control" type="text" id="infoavghr" name="avghr"/>
+                      </div>
+                      <div class="col">
+                        <input class="form-control" type="text" id="infomaxhr" name="maxhr"/>
+                      </div>
+                      <div class="col-2 text-start">
+                        bpm
+                      </div>
+                    </div>
+                          
+                    <!-- Pace -->
+                    <div class="d-flex row align-items-center">
+                      <div class="col-2 text-end ">
+                        Pace
+                      </div>
+                      <div class="col">
+                        <input class="form-control" type="text" id="infominpace" name="minpace"/>
+                      </div>
+                      <div class="col">
+                        <input class="form-control" type="text" id="infoavgpace" name="avgpace" readonly/>
+                      </div>
+                      <div class="col">
+                        <input class="form-control" type="text" id="infomaxpace" name="maxpace"/>
+                      </div>
+                      <div class="col-2 text-start">
+                        sec / 100m
+                      </div>
+                    </div>
+
+                    <div class="row p-2 mb-2">
+                      <label for="infodescription">Description</label>
+                      <textarea class="form-control" type="textarea" id="infodescription" name="infodescription"></textarea>
+                    </div>
+                    
+                    <label for="infosmileyrange">How did you feel?</label>
+                    <div class="row mb-2" id="infosmileyrange">
+
+                      <div class="col smileys">
+                        <label>           
+                          <input type="radio" class="smiley form-control" name="infofeeling" value ="5"><i class="far fa-grin-hearts smiley" style="font-size:2rem"></i></button>
+                        </label>
+                      </div>
+                      
+                      <div class="col smileys">
+                        <label>           
+                          <input type="radio" class="smiley form-control" name="infofeeling" value ="4"><i class="far fa-grin smiley" style="font-size:2rem"></i></button>
+                        </label>
+                      </div>
+                      
+                      <div class="col smileys">
+                        <label>           
+                          <input type="radio" class="smiley form-control" name="infofeeling" value ="3"><i class="far fa-meh smiley" style="font-size:2rem"></i></button>
+                        </label>
+                      </div>
+                      
+                      <div class="col smileys">
+                        <label>           
+                          <input type="radio" class="smiley form-control" name="infofeeling" value ="2"><i class="far fa-sad-tear smiley" style="font-size:2rem"></i></button>
+                          </label>
+                      </div>
+                      
+                      <div class="col smileys">
+                        <label>           
+                          <input type="radio" class="smiley form-control" name="infofeeling" value ="1"><i class="far fa-sad-cry smiley" style="font-size:2rem"></i></button>
+                        </label>
+                      </div>
+                      
+                    </div>
+
+                    <div class="row form-group p-2">
+                      <label for="infoperceivedexertion" class="form-label">Perceived Exertion</label>
+                      <input type="range" class="form-range" min="1" max="10" id="infoperceivedexertion" name="infoperceivedexertion">
+                    </div>
+
+                    <div class="row p-2 text-center mb-2" id="inforangevalue" style="height:2rem">
+                    </div>
+
+                  </div>
+
+                  <div class="d-flex col-6 flex-column">
+                    
+                    <div class="row form-group p-2">
+                      <label for="comments" class="form-label">Post Activity Comments</label>
+                      <hr>
+                      <div class="col" id="infoconversations"></div>
+                    </div>
+                  </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </form> 
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      <button type="submit" form="infotrainingform" class="btn btn-primary" value="submit">Save changes</button>
+    </div>
+  </div>
+</div>
+</div>
+
+<script defer>
 
   window.addEventListener("load", () => {
+
+    const toggleInfoModal = (data) => {
+      console.log(data);
+      const infoModal = new bootstrap.Modal(document.getElementById('infoModal'));
+      infoModal.toggle();
+    }
+      
     const todocontainer = document.getElementById('todocontainer');
     const todolist = document.getElementById('todolist');
     const todoform = document.getElementById('todoform');
     const createtodo = document.getElementById('createtodo');
-    
+      
+    const addRemoveFn = () => {
+      const removetodo = document.getElementsByClassName('removetodo');
+      [...removetodo].forEach( (bin) => {
+        bin.addEventListener("click", (ev)=> {
+      
+        axios({
+          method: "delete",
+          headers: {
+                'Content-Type': 'application/json',
+              },
+          url: '/athlete/<%=data.index%>/dashboard/todo',
+          data: {'id': ev.target.id}
+        })
+          .then( (response) => {
+            console.log(response.data)
+            //handle success
+            if(response.status === 200){
+              const deletedElem = document.getElementById(`r${response.data.rows[0].id}`)
+              deletedElem.remove();
+            }
+            
+          })
+          .catch( (response) => {
+            //handle error
+            console.log(response);
+          });
+        })
+      })
+    }
+
+    addRemoveFn();
 
     createtodo.addEventListener("click",()=> {
-    
+      
       axios({
         method: "post",
         headers: {
@@ -289,84 +1088,323 @@
       })
         .then( (response) => {
           //handle success
-          todocontainer.innerHTML+=`<div class="row"> 
-                <div class="col-11">- ${response.data[0].todo}</div> 
-                <div class="col-1">
-                  <button type="button removetodo" class="btn btn-light" id="${response.data[0].id}">
-                    <span><i class="far fa-trash-alt"></i></span>
-                </div>
-              </div>`
+
+          const todoitemcontainer = document.createElement('div')
+          todoitemcontainer.classList.add('row','mb-2');
+          todoitemcontainer.id = `r${response.data[0].id}`
+
+          const todoitem = document.createElement('div');
+          todoitem.classList.add('col-10')
+          todoitem.innerText = `- ${response.data[0].todo}`
+
+          const trashcontainer = document.createElement('div');
+          trashcontainer.classList.add('col-2')
+          const trashbutton = document.createElement('button')
+          trashbutton.classList.add('btn','btn-outline-light','removetodo')
+          trashbutton.id = `${response.data[0].id}`
           
-          console.log(response);
+          const icon = document.createElement('i')
+          icon.classList.add('far','fa-trash-alt');
+
+          trashbutton.append(icon)
+          trashcontainer.append(trashbutton)
+          todoitemcontainer.append(todoitem, trashcontainer)
+
+          todocontainer.append(todoitemcontainer)
+
+          addRemoveFn();
         })
         .catch( (response) => {
           //handle error
           console.log(response);
         });
     })
-
-    const removetodo = document.getElementsByClassName('removetodo');
-
-    removetodo.forEach( (bin) => {
-      
-      bin.addEventListener("click",(ev)=> {
     
-      axios({
-        method: "delete",
-        headers: {
-              'Content-Type': 'application/json',
-            },
-        url: '/athlete/<%=data.index%>/dashboard/todo',
-        data: {'id': ev.target.id}
-      })
-        .then( (response) => {
-          //handle success
-          document.getElementById(response.data[0].id).remove();
-        })
-        .catch( (response) => {
-          //handle error
-          console.log(response);
-        });
-    })
-  })
-
-    const todayworkout = document.getElementById('todayworkout');
-    
-
-    const testChart = new Chart(document.getElementById("testchart"), {
-      type: "line",
-      data: {
-        datasets: [
-          {
-            label: "My First dataset",
-            backgroundColor: "rgb(255, 99, 132)",
-            borderColor: "rgb(255, 99, 132)",
-            data: <%- JSON.stringify(data.caloriebysport) %>,
+// Chart Configs
+  const caloriebysport = new Chart(document.getElementById("caloriebysport"), {
+    type: "bar",
+    data: {
+      datasets: [
+        {
+          label: "Calories by Sport",
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.2)',
+            'rgba(255, 159, 64, 0.2)',
+          ],
+          hoverBackgroundColor: [
+            'rgba(255, 99, 132, 0.5)',
+            'rgba(255, 159, 64, 0.5)',
+          ],
+          borderColor: [
+            'rgb(255, 99, 132)',
+            'rgb(255, 159, 64)',
+          ],
+          borderWidth: 1,
+          data: <%- JSON.stringify(data.caloriebysport) %>,
+        }
+      ],
+    },
+    options: {
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              return context.dataset.label + ': ' + context.parsed.y + 'kCal'
+            }
           }
-        ],
+        }
       },
-      options: {
-        // scales: {
-        //   x: {
-        //     type: "time",
-        //     time: {
-        //       unit: "day",
-        //     },
-        //   },
-        //   y: {
-        //     ticks: {
-        //       stepSize: 10.0,
-        //     },
-        //   },
-        // },
-        parsing: {
-          // xAxisKey: "date",
-          // yAxisKey: "distance",
-        },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: 'kCal',
+          ticks: {
+                  // Include kCal in the ticks
+                  callback: function(value, index, values) {
+                      return value + 'kCal';
+                  }
+              }
+        }
+      }
+    },
+  });
+
+  const distancebysport = new Chart(document.getElementById("distancebysport"), {
+    type: "bar",
+    data: {
+      datasets: [
+        {
+          label: "Distance by Sport",
+          backgroundColor: [
+
+            'rgba(255, 205, 86, 0.2)',
+            'rgba(75, 192, 192, 0.2)',
+
+          ],
+          hoverBackgroundColor: [
+
+            'rgba(255, 205, 86, 0.5)',
+            'rgba(75, 192, 192, 0.5)',
+            'rgba(54, 162, 235, 0.5)',
+
+          ],
+          borderColor: [
+
+            'rgb(255, 205, 86)',
+            'rgb(75, 192, 192)',
+
+
+          ],
+          borderWidth: 1,
+          data: <%- JSON.stringify(data.distancebysport) %>,
+        }
+      ],
+    },
+    options: {
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              return context.dataset.label + ': ' + context.parsed.y + 'km'
+            }
+          }
+        }
       },
-    });
-});
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: 'km',
+          ticks: {
+                  // Include kCal in the ticks
+                  callback: function(value, index, values) {
+                      return value + 'km';
+                  }
+              }
+        }
+      }
+    },
+  });
+
+  const durationbysport = new Chart(document.getElementById("durationbysport"), {
+    type: "bar",
+    data: {
+      datasets: [
+        {
+          label: "Duration by Sport",
+          backgroundColor: [
+
+            'rgba(54, 162, 235, 0.2)',
+            'rgba(153, 102, 255, 0.2)',
+
+          ],
+          hoverBackgroundColor: [
+
+            'rgba(54, 162, 235, 0.5)',
+            'rgba(153, 102, 255, 0.5)',
+
+          ],
+          borderColor: [
+
+            'rgb(54, 162, 235)',
+            'rgb(153, 102, 255)',
+
+          ],
+          borderWidth: 1,
+          data: <%- JSON.stringify(data.durationbysport) %>,
+        }
+      ],
+    },
+    options: {
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (context) => {
+              return context.dataset.label + ': ' + Math.round(context.parsed.y /60) + 'mins'
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: 'mins',
+          ticks: {
+                  // Include kCal in the ticks
+                  callback: function(value, index, values) {
+                      return Math.round(value/60) + 'mins';
+                  }
+              }
+        }
+      }
+    },
+  });
+
+  const avghrbysport = new Chart(document.getElementById("avghrbysport"), {
+    type: "doughnut",
+    data: {
+      datasets: [
+        {
+          label: "Avg HR by Sport",
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.2)',
+            'rgba(255, 159, 64, 0.2)',
+            'rgba(255, 205, 86, 0.2)',
+            'rgba(75, 192, 192, 0.2)',
+            'rgba(54, 162, 235, 0.2)',
+            'rgba(153, 102, 255, 0.2)',
+            'rgba(201, 203, 207, 0.2)'
+          ],
+          hoverBackgroundColor: [
+            'rgba(255, 99, 132, 0.5)',
+            'rgba(255, 159, 64, 0.5)',
+            'rgba(255, 205, 86, 0.5)',
+            'rgba(75, 192, 192, 0.5)',
+            'rgba(54, 162, 235, 0.5)',
+            'rgba(153, 102, 255, 0.5)',
+            'rgba(201, 203, 207, 0.5)'
+          ],
+          borderColor: [
+            'rgb(255, 99, 132)',
+            'rgb(255, 159, 64)',
+            'rgb(255, 205, 86)',
+            'rgb(75, 192, 192)',
+            'rgb(54, 162, 235)',
+            'rgb(153, 102, 255)',
+            'rgb(201, 203, 207)'
+          ],
+          data: <%- JSON.stringify(Object.values(data.avghrbysport)) %>,
+          hoverOffset: 4
+        }
+      ], 
+      labels:  <%- JSON.stringify(Object.keys(data.avghrbysport)) %>
+    },
+  });
+  
+  const avgpacebysport = new Chart(document.getElementById("avgpacebysport"), {
+    type: "doughnut",
+    data: {
+      datasets: [
+        {
+          label: "Avg HR by Sport",
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.2)',
+            'rgba(255, 159, 64, 0.2)',
+            'rgba(255, 205, 86, 0.2)',
+            'rgba(75, 192, 192, 0.2)',
+            'rgba(54, 162, 235, 0.2)',
+            'rgba(153, 102, 255, 0.2)',
+            'rgba(201, 203, 207, 0.2)'
+          ],
+          hoverBackgroundColor: [
+            'rgba(255, 99, 132, 0.5)',
+            'rgba(255, 159, 64, 0.5)',
+            'rgba(255, 205, 86, 0.5)',
+            'rgba(75, 192, 192, 0.5)',
+            'rgba(54, 162, 235, 0.5)',
+            'rgba(153, 102, 255, 0.5)',
+            'rgba(201, 203, 207, 0.5)'
+          ],
+          borderColor: [
+            'rgb(255, 99, 132)',
+            'rgb(255, 159, 64)',
+            'rgb(255, 205, 86)',
+            'rgb(75, 192, 192)',
+            'rgb(54, 162, 235)',
+            'rgb(153, 102, 255)',
+            'rgb(201, 203, 207)'
+          ],
+          data: <%- JSON.stringify(Object.values(data.avgpacebysport)) %>,
+          hoverOffset: 4
+        }
+      ], 
+      labels:  <%- JSON.stringify(Object.keys(data.avgpacebysport)) %>
+    },
+  });
+
+  
+  const activitytypetally = new Chart(document.getElementById("activitytypetally"), {
+    type: "polarArea",
+    data: {
+      datasets: [
+        {
+          label: "Tally of Activities",
+          backgroundColor: [
+            'rgba(255, 99, 132, 0.2)',
+            'rgba(255, 159, 64, 0.2)',
+            'rgba(255, 205, 86, 0.2)',
+            'rgba(75, 192, 192, 0.2)',
+            'rgba(54, 162, 235, 0.2)',
+            'rgba(153, 102, 255, 0.2)',
+            'rgba(201, 203, 207, 0.2)'
+          ],
+          hoverBackgroundColor: [
+            'rgba(255, 99, 132, 0.5)',
+            'rgba(255, 159, 64, 0.5)',
+            'rgba(255, 205, 86, 0.5)',
+            'rgba(75, 192, 192, 0.5)',
+            'rgba(54, 162, 235, 0.5)',
+            'rgba(153, 102, 255, 0.5)',
+            'rgba(201, 203, 207, 0.5)'
+          ],
+          borderColor: [
+            'rgb(255, 99, 132)',
+            'rgb(255, 159, 64)',
+            'rgb(255, 205, 86)',
+            'rgb(75, 192, 192)',
+            'rgb(54, 162, 235)',
+            'rgb(153, 102, 255)',
+            'rgb(201, 203, 207)'
+          ],
+          data: <%- JSON.stringify(Object.values(data.activitytypetally)) %>
+        }
+      ], 
+      labels:  <%- JSON.stringify(Object.keys(data.activitytypetally)) %>
+    },
+  });
 
 
 
+
+
+  });
 </script>
