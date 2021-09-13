@@ -845,8 +845,8 @@
         
         // populate this list from ejs
         {
-          id: <%= event.id %>,
-          title: "<%= event.title %>",
+          id: "<%= event.id %>",
+          title: "<%= event.id %>.<%= event.title %> @A<%= event.athleteid %>",
           start: "<%= event.datetime%>",
           color: new Date('<%= event.date%>') > new Date() ? 'grey': '',
           textColor: 'black',

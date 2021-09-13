@@ -1108,7 +1108,7 @@ app.get('/coach/:index/trainingplans', checkAuth, getCoachData, getAthleteData, 
 // athlete schedule
 app.get('/coach/:index/timetable', checkAuth, getCoachData, getAthleteData, getAthleteTrainingInfo,(req,res)=> {
 const {index} = req.params;
-  pool.query(`SELECT * FROM training INNER JOIN relation ON training.athleteid = relation.athleteid INNER JOIN athlete ON training.athleteid = athlete.id WHERE relation.coachid = ${index} `)
+  pool.query(`SELECT training.id, planid, description, activitytype, perceivedexertion, datetime, title, distance, calories, timetaken, feeling, minpace, avgpace, maxpace, minhr, avghr, maxhr, relation.athleteid, relation.coachid  FROM training INNER JOIN relation ON training.athleteid = relation.athleteid INNER JOIN athlete ON training.athleteid = athlete.id WHERE relation.coachid = ${index} `)
     .then((result)=> {
       const trainingdata = result.rows;
       const output = { 
@@ -1135,7 +1135,7 @@ app.post('/coach/:index/schedule', (req,res)=> {
 
 app.get('/coach/:index/athlete/:athleteid/timetable', checkAuth, getCoachData, getAthleteData, getAthleteTrainingInfo,(req,res)=> {
   const {index, athleteid} = req.params;
-  pool.query(`SELECT * FROM training INNER JOIN relation ON training.athleteid = relation.athleteid WHERE relation.coachid = ${index} AND training.athleteid = ${athleteid}`, (err,data)=> {
+  pool.query(`SELECT training.id, planid, description, activitytype, perceivedexertion, datetime, title, distance, calories, timetaken, feeling, minpace, avgpace, maxpace, minhr, avghr, maxhr, relation.athleteid, relation.coachid FROM training INNER JOIN relation ON training.athleteid = relation.athleteid WHERE relation.coachid = ${index} AND training.athleteid = ${athleteid}`, (err,data)=> {
     const trainingdata = data.rows;
     const output = { 
                       data: 
@@ -1148,7 +1148,7 @@ app.get('/coach/:index/athlete/:athleteid/timetable', checkAuth, getCoachData, g
                           title: `Athlete ${athleteid} | Training Plans`
                         }
                     }
-                    console.log(output.data.athletedata[0])
+                    console.log(JSON.parse(output.data.trainingdata))
       res.render('timetable', output); 
   })
 })
