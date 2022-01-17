@@ -62,15 +62,13 @@ app.set('view engine', 'ejs');
 // create separate DB connection configs for production vs non-production environments.
 // ensure our server still works on our local machines.
 let pgConnectionConfigs;
-if (process.env.ENV === 'PRODUCTION') {
+if (process.env.DATABASE_URL) {
   // determine how we connect to the remote Postgres server
   pgConnectionConfigs = {
-    user: 'postgres',
-    // set DB_PASSWORD as an environment variable for security.
-    password: process.env.DB_PASSWORD,
-    host: 'localhost',
-    database: 'trainingpeaks',
-    port: 5432,
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false
+    }
   };
 } else {
   // determine how we connect to the local Postgres server
