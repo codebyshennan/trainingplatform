@@ -1,0 +1,101 @@
+<%- include('header-coach', {index: `${data.index}`, title: `${data.title}`})
+-%>
+
+<link rel="stylesheet" href="/static/overview.css" />
+<link
+  href="https://fonts.googleapis.com/css?family=Open+Sans:400,600,700"
+  rel="stylesheet"
+  type="text/css"
+/>
+
+<div class="container-fluid">
+  <div class="row justify-content-center">
+    <% JSON.parse(data.athletedata).forEach(athlete => { %>
+    <div class="col-lg-3 col-md-4 col-sm-6 col-xs-12">
+      <div class="tile">
+        <div class="wrapper">
+          <div class="banner-img">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/9/99/Sample_User_Icon.png"
+              class="rounded-circle"
+              style="width: 200px; height: 200px"
+              alt="Image 1"
+            />
+          </div>
+          <div class="header"><%= athlete.fname%>, <%= athlete.lname%></div>
+
+          <div class="dates">
+            <div class="start">
+              <strong>COACHED BY</strong> <%= data.coachdata[0].fname %>
+              <span></span>
+            </div>
+            <div class="ends">
+              <strong> JOIN DATE</strong> <%=
+              Date(athlete.createdon).substr(0,10) %>
+            </div>
+          </div>
+
+          <div class="stats">
+            <div>
+              <strong>ACTIVITIES<br />ALL TIME</strong> <%=
+              athlete.alltimeactivity %>
+            </div>
+
+            <div>
+              <strong>DURATION<br />ALL TIME</strong> <%=
+              (athlete.alltimeduration/60/60).toFixed(2) %>hrs
+            </div>
+
+            <div>
+              <strong>DISTANCE<br />ALL TIME</strong> <%=
+              athlete.alltimedistance.toFixed(2) %>km
+            </div>
+          </div>
+
+          <div class="stats">
+            <div>
+              <strong>ACTIVITIES<br />THIS MONTH</strong> <%=
+              athlete.thismonthactivity%>
+            </div>
+
+            <div>
+              <strong>DURATION<br />THIS MONTH</strong> <%=
+              (athlete.thismonthduration/60/60).toFixed(2) %>hrs
+            </div>
+
+            <div>
+              <strong>DISTANCE<br />THIS MONTH</strong> <%=
+              athlete.thismonthdistance.toFixed(2) %>km
+            </div>
+          </div>
+
+          <div class="stats">
+            <div>
+              <strong>CALORIES <br />BURNT</strong> <%= athlete.alltimecalories
+              %>kCal
+            </div>
+
+            <div>
+              <strong>AVERAGE<br />HEARTRATE</strong> <%=
+              athlete.alltimeavghr.toFixed(2) %>bpm
+            </div>
+
+            <div>
+              <strong>AVERAGE<br />PACE</strong> <%= athlete.alltimeavgpace
+              %>km/h
+            </div>
+          </div>
+
+          <div class="footer">
+            <a
+              href="athlete/<%= athlete.id %>/timetable "
+              class="Cbtn Cbtn-primary"
+              >View</a
+            >
+          </div>
+        </div>
+      </div>
+    </div>
+    <% }) %>
+  </div>
+</div>

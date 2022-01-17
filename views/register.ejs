@@ -1,0 +1,67 @@
+<%- include('header-home') %>
+    <p></p>
+    <main class="login-form">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-8">
+                <div class="card">
+                    <div class="card-header">Register</div>
+                    <div class="card-body">
+                        <form action="/register" method="post">
+                           <div class="form-group row">
+                                <label for="fname" class="col-md-4 col-form-label text-md-right">First Name</label>
+                                <div class="col-md-6">
+                                    <input type="text" id="fname" class="form-control" name="fname" required autofocus>
+                                </div>
+                            </div>
+
+                             <div class="form-group row">
+                                <label for="lname" class="col-md-4 col-form-label text-md-right">Last Name</label>
+                                <div class="col-md-6">
+                                    <input type="text" id="lname" class="form-control" name="lname" required autofocus>
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="username" class="col-md-4 col-form-label text-md-right">Username</label>
+                                <div class="col-md-6">
+                                    <input type="text" id="username" class="form-control" name="username" required autofocus>
+                                </div>
+                            </div>
+
+                            <div class="form-group row">
+                                <label for="password" class="col-md-4 col-form-label text-md-right">Password</label>
+                                <div class="col-md-6">
+                                    <input type="password" id="password" class="form-control" name="password" required>
+                                </div>
+                            </div>
+                            <div class="form-group row">
+                                <label for="usertype" class="col-md-4 col-form-label text-md-right">User Type</label>
+                                <div class="col-md-6">
+                                    
+                                    <select id="usertype" class="form-select" name="usertype" required>
+                                        <option value = "athlete">Athlete</option>
+                                        <option value = "coach">Coach</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="col-md-6 offset-md-4">
+
+                                <button type="submit" class="btn btn-primary">
+                                    Register
+                                </button>
+                            </div>
+
+                            
+                    </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    </div>
+
+  </main>
+  </body>
+</html>

@@ -1,0 +1,1047 @@
+<%- include('header', {index: data.index, title: data.title, username: data.username}) -%>
+<!-- scripts for fullcalendar -->
+<link href="/static/main.css" rel="stylesheet" />
+<script src="/static/main.js"></script>
+
+<!-- scripts for chartJS / workout charts -->
+<script src="https://cdn.jsdelivr.net/npm/luxon@2.0.2/build/global/luxon.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.5.1/chart.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-luxon@0.2.1"></script>
+<script src="/static/chartjs-dragdata.js"></script>
+
+<!-- separate scripts for handling activity behaviour  -->
+<script defer src="/static/addactivity.js"></script>
+<script defer src="/static/viewactivity.js"></script>
+
+<!-- draggablejs for workout builder -->
+<script src="https://cdn.jsdelivr.net/npm/@shopify/draggable@1.0.0-beta.11/lib/sortable.js"></script>
+
+<style>
+
+  .templatetime, .templateminhr, .templatemaxhr{
+    border:none;
+    font-size:2rem;
+  }
+
+  .templatetime {
+    width: 100px;
+  }
+
+  .templateminhr, .templatemaxhr{
+   width: 50px;
+  }
+
+  .draggable--over:hover::before{
+  content: 'Insert here';
+  text-align: center;
+  box-sizing: border-box;
+  background: yellow;
+  width: 100%;
+  height: 100%;
+}
+
+  #fixedbutton {
+    position: fixed;
+    bottom: 50px;
+    right: 50px;
+    width: 4rem;
+    height: 4rem;
+    font-size:2rem;
+    border-radius: 80px;
+    z-index: 999;
+}
+
+  .createtemplate{
+    cursor: pointer;
+  }
+
+  .createtemplate:hover{
+    background-color: rgba(0,0,0,0.2);
+  }
+  /* .row > * {
+    border: 0.1px solid black;
+  } */
+  .modal-custom-addactivity{
+    max-width: 95vw;
+    max-height: 95vh;
+    font-size: 0.8rem;
+  }
+
+  .modal-custom-viewactivity{
+    max-width: 80vw;
+    max-height: 95vh;
+  }
+
+  .smiley {
+    background-color: transparent;
+    border: none;
+    color: rgba(0,0,0,0.2);
+  }
+
+  .smiley:hover {
+    color: black;
+  }
+
+  input[type=text], input[type=textarea], select{
+    background-color: transparent;
+  }
+  input[type=radio] { 
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  input[type=radio]:checked + i {
+    color:black;
+  }
+
+  input[type="file"]{
+    display: none;
+  }
+
+  .uploadbutton {
+      border: 1px solid #ccc;
+      display: inline-block;
+      padding: 6px 12px;
+      cursor: pointer;
+  }
+
+  #workoutcard, #infoworkoutcard {
+    background-color: rgba(0,0,0,0.2);
+    border-radius: 8px;
+  }
+  
+
+  #loading {
+    display: none;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+
+  #calendar {
+    max-width: 100%;
+    max-height: 100%;
+    margin: 0 auto;
+  }
+
+  .btn-circle {
+    width: 30px;
+    height: 30px;
+    padding: 6px 0px;
+    border-radius: 15px;
+    text-align: center;
+    font-size: 12px;
+    line-height: 1.42857;
+  }
+
+</style>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const resetFields = () => {
+      const fields = document.getElementsByTagName('input')
+      for (let index = 0; index < fields.length; index++) {
+        fields[index].value = '';
+      }
+      templatecontainer.innerHTML = '';
+      timetaken.innerText="--:--:--";
+    }
+
+
+    var calendarEl = document.getElementById("calendar");
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+      themeSystem: "bootstrap",
+      headerToolbar: {
+        left: "prev,next today",
+        center: "title",
+        right: "dayGridMonth,timeGridWeek,listMonth",
+      },
+      eventDisplay: 'auto',
+      initialView: "dayGridMonth",
+      navlinks: true, // can click day/week names to navigate views
+      selectable: true,
+      editable: true, // determines if the event can be dragged or resized
+      dayMaxEvents: true, // allow 'more' link when too many events
+      longPressDelay: 1000,
+      
+      events: [
+        <% JSON.parse(data.data).forEach( (event) => { %>
+        // populate this list from ejs
+        {
+          id: <%= event.id %>,
+          title: "<%= event.title %>",
+          start: "<%= event.datetime%>",
+          color: new Date('<%= event.datetime%>') > new Date() ? 'grey': '',
+          textColor: 'black',
+          editable: true,
+          // backgroundColor: 'red',
+          // borderColor: 'white',
+          extendedProps: {
+            description: "<%= event.description%>",
+            activitytype : "<%- event.activitytype%>",
+            perceivedexertion: "<%= event.perceivedexertion %>",
+            distance : "<%= event.distance%>",
+            calories : "<%= event.calories%>",
+            timetaken : "<%= event.timetaken%>",
+            minpace : "<%= event.minpace %>",
+            avgpace : "<%= event.avgpace %>",
+            maxpace : "<%= event.maxpace %>",
+            minhr : "<%= event.minhr %>",
+            avghr : "<%= event.avghr %>",
+            maxhr : "<%= event.maxhr %>",
+            feeling: "<%= event.feeling %>",
+            createdon : "<%=event.createdon%>",
+            createdby: "<%=event.createdby%>"
+          }
+        },
+
+        <% }) %>
+      ],
+      eventTimeFormat: { // like '14:30:00'
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+        meridiem: false
+      },
+      eventClick: (info) => {
+        console.log('event >> ', info)
+
+        const eventId = document.getElementById('eventid');
+        eventid.value = info.event.id;
+
+        const modalTitle = document.getElementById('infoModalTitle');
+        modalTitle.innerText = info.event.title;
+
+        const modalBody = document.getElementById('infoModalBody');
+        infoactivitylist.value = info.event.extendedProps.activitytype.toLowerCase();
+        toggleImg(info.event.extendedProps.activitytype.toLowerCase());
+
+        infoperceivedexertion.value = info.event.extendedProps.perceivedexertion;
+        infodatecontainer.value = info.event.start;
+        infostartdate.placeholder = info.event.start.toDateString();
+        infotimelist.value = (()=> { 
+          if(info.event.start.getHours().toString().length==1){
+            if(info.event.start.getMinutes().length==1){
+              return '0'+info.event.start.getHours().toString()+':'+'0'+info.event.start.getMinutes().toString();
+            } else {
+              return '0'+info.event.start.getHours().toString()+':'+info.event.start.getMinutes().toString();
+            }
+        } else{
+          if(info.event.start.getMinutes().toString().length==1){
+              return info.event.start.getHours().toString()+':'+'0'+info.event.start.getMinutes().toString();
+            } else {
+              return info.event.start.getHours().toString()+':'+info.event.start.getMinutes().toString();
+            }
+        }
+      })();
+
+        infofeelingvalue.value = info.event.extendedProps.feeling
+        infoavgpace.value = info.event.extendedProps.avgpace
+        infoavghr.value = info.event.extendedProps.avghr
+        infominpace.value = info.event.extendedProps.minpace
+        infomaxpace.value = info.event.extendedProps.maxpace
+        infominhr.value = info.event.extendedProps.minhr
+        infomaxhr.value = info.event.extendedProps.maxhr
+        infoactualdistance.value = info.event.extendedProps.distance;
+        infoactualtimetaken.value = info.event.extendedProps.timetaken;
+        infoactualcalories.value = info.event.extendedProps.calories;
+        infodescription.value = info.event.extendedProps.description;
+        infoModalTitle.value = info.event.title;
+        infotitle.value = info.event.title;
+        infoactivitylist.options.value = info.event.extendedProps.activitytype;
+        infotimetaken.innerHTML = info.event.extendedProps.timetaken;
+        infodistancevalue.innerHTML = info.event.extendedProps.distance;
+
+        const infoModal = new bootstrap.Modal(document.getElementById('infoModal'));
+        infoModal.toggle();
+
+      },
+      select: (info) => {
+        console.log('info >> ', info)
+        // modalTitle.innerText = info.event.title;
+        // modalBody.innerText = info.event.description;
+        var newModal = new bootstrap.Modal(document.getElementById('makeNewModal'));
+        resetFields();
+        datecontainer.value = info.startStr;
+        startdate.placeholder = new Date(info.start).toString().substr(0,15)
+        newModal.toggle();
+      },
+      eventDrop: (info) => {
+
+        // route used to query an update to the db every drag and drop
+        axios({
+            method: 'post',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            url: '/athlete/<%=data.index%>/schedule',
+            data: {
+              id: `${info.event.id}`,
+              datetime: `${info.event.start.toDateString()}`,
+              title: `${info.event.title}`
+            }
+          }).then((response)=> {console.log(response)});
+          console.log(info);
+        // if (!confirm("Are you sure about this change?")) {
+        //   info.revert();
+        // }
+      }
+    });
+    calendar.render();
+  });
+</script>
+
+<body>
+    <!-- Init Table -->
+<div
+  id="calendar"
+  class="fc fc-media-screen fc-direction-ltr fc-theme-standard mt-3"
+></div>
+
+<!-- Button trigger modal -->
+<button type="button" class="btn btn-primary btn-circle" id="fixedbutton" data-bs-toggle="modal" data-bs-target="#makeNewModal" onclick="resetFields()">
+  <i class="fa fa-plus"></i>
+</button>
+
+
+<div id="makeNewModal" class="modal fade">
+  <div class="modal-dialog modal-custom-addactivity modal-dialog-centered modal-dialog-scrollable">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h4 id="makeNewModalTitle" class="modal-title">Add New Activity</h4>
+        <button type="button" class="close" data-bs-dismiss="modal">
+          <span aria-hidden="true">×</span>
+          <span class="sr-only">close</span>
+        </button>
+      </div>
+
+      <div id="makeNewModalBody" class="modal-body">
+        <form action="schedule/addactivity" method="POST" enctype="multipart/form-data" id="trainingform">
+          <div class="row justify-content-start" id="startparams" style="padding:10px 10px 10px 10px;">
+            <div class="col-2">
+              <input type="text" id="startdate"
+              placeholder = "Fri 5 Sep 2021"
+              datavalue=""
+              value=""
+              style="border: none; "
+                >
+              <input type="text" id="datecontainer" name="startdate"
+              value=""
+              style="display:none "
+                >  
+            </div>
+            <div class="col-2">
+              <input type="time" name="time" style="border: none;" placeholder="Enter Time" id="timelist" onblur="(this.type='text')">
+            </div>
+          </div>
+          <!-- overview -->
+          <div class="row" id = "builderoptions">
+            <div class="col" >
+              <div class="row" id = "workoutdetails" style="margin-left:10px">
+                <div class="col-10 p-3" id="workoutcard" > 
+                  <input type="text" name="title" id="title" value="Untitled Workout" style="border: none; width: 100%; margin-left:10px">
+                  <div class="row justify-content-center align-items-center" style="height: 100px">
+                    <div class="col-2 " id="activitytype">
+                      -
+                    </div>
+                    <div class="col-1">
+                      <select name="activitytype" style="border: none;width:20px" id="activitylist">
+                          <option hidden></option>
+                          <option value="Running"> Running </option>
+                          <option value="Swimming"> Swimming </option>
+                          <option value="Cycling"> Cycling </option>
+                          <option value="Gym"> Gym </option>
+                        </select>
+                    </div>
+                    <div class="col-3" style="font-size: 2rem;">
+                      <span id="timetaken">--:--:--</span>
+                    </div>
+                    <div class="col-3" style="font-size: 2rem;">
+                      <span id="distancevalue">--</span> <span id="distanceunit"> km</span>
+                    </div>
+                    <div class="col-1" style="font-size: 2rem;" id="feelingvalue">
+                    </div>
+                  </div>
+                </div>
+                <div class="col-2">
+                  <div class="row">
+                    <p></p>
+                  </div>
+                  <div class="row text-center" > 
+                    <span style="font-size: 0.8rem;">These formats are accepted:</span>
+                    <br>
+                    <span style="font-size: 1rem">.tcx | .gpx | .fit</span>
+                  </div>
+                  <div class="row" style="padding:0 10px 0 10px;">
+                    <label for="trainingfile" class="uploadbutton">
+                      <i class="fas fa-file-upload"></i> Upload
+                    </label>
+                    <input type="file" name="trainingfile" id="trainingfile">
+                  </div>
+                  <div class="row" style="position:relative;padding:0 10px 0 10px;width: 180px;max-height:50px; word-break: break-all;overflow-y:hidden" id='filepath'>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="col">
+              <div class="row">
+                <div class="col-8 " style="padding:10px 10px 10px 10px;">
+                  <p></p>
+                  <div class="d-flex row text-center align-content-center">
+                    <p>Click on blocks to build workout</p></div>
+                  <div class="row justify-content-center text-center align-middle" style="font-size:1rem">
+                    <div class="col createtemplate" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;" id="warmuptemplate">
+                      <span class"align-middle"><i class="fas fa-chart-area"></i> Warm-up</span>    
+                    </div>
+                    <div class="col createtemplate" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;" id="activetemplate">
+                      <span class"align-middle"><i class="fas fa-chart-area"></i> Active</span>    
+                    </div>
+                    <div class="col createtemplate" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;" id="recoverytemplate">
+                      <span class"align-middle"><i class="fas fa-chart-area"></i> Recovery</span>    
+                    </div>
+                    <div class="col createtemplate" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;" id="cooldowntemplate">
+                      <span class"align-middle"><i class="fas fa-chart-area"></i> Cool-down</span>    
+                    </div>
+                  </div>
+                  <div class="row justify-content-center text-center align-middle" style="font-size:1rem" >
+                    <div class="col createtemplate" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;" id="twosteptemplate">
+                      <span class"align-middle"><i class="fas fa-chart-area"></i> Two-Step Repeats</span>    
+                    </div>
+                    <div class="col createtemplate" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;" id="threesteptemplate">
+                      <span class"align-middle"><i class="fas fa-chart-area"></i> Three-Step Repeats</span>    
+                    </div>
+                    <div class="col createtemplate" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;" id="rampuptemplate">
+                      <span class"align-middle"><i class="fas fa-chart-area"></i> Ramp Up</span>    
+                    </div>
+                    <div class="col createtemplate" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;" id="rampdowntemplate">
+                      <span class"align-middle"><i class="fas fa-chart-area"></i> Ramp Down</span>    
+                    </div>
+                  </div>
+                </div>
+                <div class="col-4">Units</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ChartJS -->
+          <div class="row" style="position: relative; width:100%; margin-top:10px; margin-left: 10px;">
+              <canvas id="newChart" width="900" height="100"></canvas>
+          </div>
+          <!-- main -->
+          <div class="container-fluid">
+            <div class="row">
+            <!-- planned/completed -->
+              <div class="col-6">
+                <div class="row">
+
+                  <!-- split between form entry and workout editor -->
+                    <div class="col-6" id="formentry">
+
+                      <!-- start of form entry -->
+                      <div class="row text-center d-flex align-items-center p-2">
+                        <div class="col-2"></div>
+                        <div class="col-4"><strong>Planned</strong></div>
+                        <div class="col-4"><strong>Completed</strong></div>
+                        <div class="col-2"></div>
+                        
+                      </div>
+                      <!-- Duration -->
+                      <div class="d-flex row align-items-center mb-3">
+                        <div class="col-2 text-end ">
+                          Duration
+                        </div>
+                        <div class="col-4">
+                          <input class="form-control" type="text" id="plannedtime" name="plannedtime"/>
+                        </div>
+                        <div class="col-4">
+                          <input class="form-control" type="text" id="actualtimetaken" name="actualtimetaken"/>
+                        </div>
+                        <div class="col-2 text-start">
+                          h:m:s
+                        </div>
+                      </div>
+
+                      <!-- Distance -->
+                      <div class="d-flex row align-items-center mb-3">
+                        <div class="col-2 text-end ">
+                          Distance
+                        </div>
+                        <div class="col-4">
+                          <input class="form-control" type="text" id="planneddistance" name="planneddistance"/>
+                        </div>
+                        <div class="col-4">
+                          <input class="form-control" type="text" id="actualdistance" name="actualdistance"/>
+                        </div>
+                        <div class="col-2 text-start">
+                          km
+                        </div>
+                      </div>
+
+                      <!-- Average Pace -->
+                      <div class="d-flex row align-items-center mb-3">
+                        <div class="col-2 text-end ">
+                          Average Pace
+                        </div>
+                        <div class="col-4">
+                          <input class="form-control" type="text" id="plannedavgpace" name="plannedavgpace" readonly/>
+                        </div>
+                        <div class="col-4">
+                          <input class="form-control" type="text" id="actualavgpace" name="actualavgpace" readonly/>
+                        </div>
+                        <div class="col-2 text-start">
+                          km/h
+                        </div>
+                      </div>
+
+                      <!-- Calories -->
+                      <div class="d-flex row align-items-center mb-3">
+                        <div class="col-2 text-end ">
+                          Calories
+                        </div>
+                        <div class="col-4">
+                          <input class="form-control" type="text" id="plannedcalories" name="plannedcalories"/>
+                        </div>
+                        <div class="col-4">
+                          <input class="form-control" type="text" id="actualcalories" name="actualcalories"/>
+                        </div>
+                        <div class="col-2 text-start">
+                          kcal
+                        </div>
+                      </div>
+
+                      <!-- HR -->
+                      <div class="row text-center d-flex align-items-center mb-3">
+                        <div class="col-2"></div>
+                        <div class="col"><strong>Min</strong></div>
+                        <div class="col"><strong>Avg</strong></div>
+                        <div class="col"><strong>Max</strong></div>
+                        <div class="col-2"></div>
+                      </div>
+
+                      <!-- HeartRate -->
+                      <div class="d-flex text-center  row align-items-center mb-3">
+                        <div class="col-2 text-end ">
+                          Heart Rate
+                        </div>
+                        <div class="col">
+                          <input class="form-control" type="text" id="minhr" name="minhr"/>
+                        </div>
+                        <div class="col">
+                          <input class="form-control" type="text" id="avghr" name="avghr"/>
+                        </div>
+                        <div class="col">
+                          <input class="form-control" type="text" id="maxhr" name="maxhr"/>
+                        </div>
+                        <div class="col-2 text-start">
+                          bpm
+                        </div>
+                      </div>
+                            
+                      <!-- Pace -->
+                      <div class="d-flex row align-items-center">
+                        <div class="col-2 text-end ">
+                          Pace
+                        </div>
+                        <div class="col">
+                          <input class="form-control" type="text" id="minpace" name="minpace"/>
+                        </div>
+                        <div class="col">
+                          <input class="form-control" type="text" id="avgpace" name="avgpace" readonly/>
+                        </div>
+                        <div class="col">
+                          <input class="form-control" type="text" id="maxpace" name="maxpace"/>
+                        </div>
+                        <div class="col-2 text-start">
+                          sec / 100m
+                        </div>
+                      </div>
+                    </div>
+
+                    <div class="d-flex col-6 flex-column">
+                      <div class="row p-2 mb-3">
+                        <label for="description">Description</label>
+                        <textarea class="form-control" type="textarea" id="description" name="description"></textarea>
+                      </div>
+                      
+                      <label for="smileyrange">How do you feel?</label>
+                      <div class="row mb-3" id="smileyrange">
+
+                        <div class="col smileys">
+                          <label>           
+                            <input type="radio" class="smiley form-control" name="feeling" value ="5"><i class="far fa-grin-hearts smiley" style="font-size:2rem"></i></button>
+                          </label>
+                        </div>
+                        
+                        <div class="col smileys">
+                          <label>           
+                            <input type="radio" class="smiley form-control" name="feeling" value ="4"><i class="far fa-grin smiley" style="font-size:2rem"></i></button>
+                          </label>
+                        </div>
+                        
+                        <div class="col smileys">
+                          <label>           
+                            <input type="radio" class="smiley form-control" name="feeling" value ="3"><i class="far fa-meh smiley" style="font-size:2rem"></i></button>
+                          </label>
+                        </div>
+                        
+                        <div class="col smileys">
+                          <label>           
+                            <input type="radio" class="smiley form-control" name="feeling" value ="2"><i class="far fa-sad-tear smiley" style="font-size:2rem"></i></button>
+                            </label>
+                        </div>
+                        
+                        <div class="col smileys">
+                          <label>           
+                            <input type="radio" class="smiley form-control" name="feeling" value ="1"><i class="far fa-sad-cry smiley" style="font-size:2rem"></i></button>
+                          </label>
+                        </div>
+                        
+                      </div>
+
+                      <div class="row form-group p-2">
+                        <label for="perceivedexertion" class="form-label">Perceived Exertion</label>
+                        <input type="range" class="form-range" min="1" max="10" id="perceivedexertion" name="perceivedexertion">
+                      </div>
+
+                      <div class="row p-2 text-center mb-3" id="rangevalue" style="height:2rem">
+                      </div>
+
+                      <div class="row form-group p-2">
+                        <label for="comments" class="form-label">Post Activity Comments</label>
+                        <textarea class="form-control" name="comments" id="comments" rows="5"></textarea>
+                      </div>
+                    </div>
+
+                </div>
+              </div>
+              <div class="col-6" id="workoutbuilder">Workout Details Editor
+                <hr>
+                <div class="row" id="workoutcontainer" style="max-height:400px;overflow:auto;">
+                  <ol id="templatecontainer">
+
+                  </ol>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+        </form> 
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" form="trainingform" class="btn btn-primary" value="submit">Save changes</button>
+        
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Info Modal -->
+<div id="infoModal" class="modal fade">
+<div class="modal-dialog modal-custom-viewactivity modal-dialog-centered modal-dialog-scrollable">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h4 class="modal-title" id="infoModalTitle"></h4>
+      <button type="button" class="close" data-bs-dismiss="modal">
+          <span aria-hidden="true">×</span>
+          <span class="sr-only">close</span>
+        </button>
+    </div>
+
+    <div class="modal-body" id="infoModalBody">      
+      <form action="schedule/editactivity" method="POST" id="infotrainingform">
+        <input type="text" id="eventid" style="display: none;">
+        <div class="row justify-content-start p-3" id="infostartparams">
+          <div class="col-2">
+            <input type="text" id="infostartdate"
+            placeholder = "Fri 5 Sep 2021"
+            datavalue=""
+            value=""
+            style="border: none; "
+              >
+            <input type="text" id="infodatecontainer" name="infostartdate"
+            value=""
+            style="display:none "
+              >  
+          </div>
+          <div class="col-2">
+            <input type="time" name="time" style="border: none;" placeholder="Enter Time" id="infotimelist" onblur="(this.type='text')">
+          </div>
+        </div>
+        <!-- overview -->
+        <div class="row" id = "infobuilderoptions">
+          <div class="col" >
+            <div class="row" id = "infoworkoutdetails">
+              <div class="col p-3 m-3" id="infoworkoutcard" style="border-radius:8px"> 
+                <input type="text" name="title"  id="infotitle" value="Untitled Workout" style="border: none; width: 100%; margin-left:10px">
+                <div class="row justify-content-center align-items-center" style="height: 100px">
+                  <div class="col-2 " id="infoactivitytype">
+                    Select Activity
+                  </div>
+                  <div class="col-1">
+                    <select name="infoactivitytype" style="border: none;width:20px" id="infoactivitylist">
+                        <option hidden></option>
+                        <option value="running"> Running </option>
+                        <option value="swimming"> Swimming </option>
+                        <option value="cycling"> Cycling </option>
+                        <option value="gym"> Gym </option>
+                    </select>
+                  </div>
+                  <div class="col-3" style="font-size: 2rem;">
+                    <span id="infotimetaken">--:--:--</span>
+                  </div>
+                  <div class="col-3" style="font-size: 2rem;">
+                    <span id="infodistancevalue">--</span> <span id="infodistanceunit"> km</span>
+                  </div>
+                  <div class="col-1" style="font-size: 2rem;" id="infofeelingvalue">
+                  </div>
+                </div>
+
+
+              </div>
+            </div>
+          </div>
+        </div>
+
+
+        <!-- packery -->
+        <div class="row" style="position: relative; width:100%; margin-left: 10px;">
+            <canvas id="viewChart" width="1000" height="100"></canvas>
+        </div>
+
+        <!-- main -->
+        <div class="container-fluid">
+          <div class="row m-3">
+          <!-- planned/completed -->
+            <div class="col">
+              <div class="row">
+
+                <!-- split between form entry and workout editor -->
+                  <div class="col-6" id="infoformentry">
+
+                    <!-- start of form entry -->
+                    <div class="row text-center d-flex align-items-center p-2">
+                      <div class="col-2"></div>
+                      <div class="col-4"><strong>Planned</strong></div>
+                      <div class="col-4"><strong>Completed</strong></div>
+                      <div class="col-2"></div>
+                      
+                    </div>
+                    <!-- Duration -->
+                    <div class="d-flex row align-items-center mb-2">
+                      <div class="col-2 text-end ">
+                        Duration
+                      </div>
+                      <div class="col-4">
+                        <input class="form-control" type="text" id="infoplannedtime" name="infoplannedtime"/>
+                      </div>
+                      <div class="col-4">
+                        <input class="form-control" type="text" id="infoactualtimetaken" name="infoactualtimetaken"/>
+                      </div>
+                      <div class="col-2 text-start">
+                        h:m:s
+                      </div>
+                    </div>
+
+                    <!-- Distance -->
+                    <div class="d-flex row align-items-center mb-2">
+                      <div class="col-2 text-end ">
+                        Distance
+                      </div>
+                      <div class="col-4">
+                        <input class="form-control" type="text" id="infoplanneddistance" name="infoplanneddistance"/>
+                      </div>
+                      <div class="col-4">
+                        <input class="form-control" type="text" id="infoactualdistance" name="infoactualdistance"/>
+                      </div>
+                      <div class="col-2 text-start">
+                        km
+                      </div>
+                    </div>
+
+                    <!-- Average Pace -->
+                    <div class="d-flex row align-items-center mb-2">
+                      <div class="col-2 text-end ">
+                        Average Pace
+                      </div>
+                      <div class="col-4">
+                        <input class="form-control" type="text" id="infoplannedavgpace" name="infoplannedavgpace" readonly/>
+                      </div>
+                      <div class="col-4">
+                        <input class="form-control" type="text" id="infoactualavgpace" name="infoactualavgpace" readonly/>
+                      </div>
+                      <div class="col-2 text-start">
+                        km/h
+                      </div>
+                    </div>
+
+                    <!-- Calories -->
+                    <div class="d-flex row align-items-center mb-2">
+                      <div class="col-2 text-end ">
+                        Calories
+                      </div>
+                      <div class="col-4">
+                        <input class="form-control" type="text" id="infoplannedcalories" name="infoplannedcalories"/>
+                      </div>
+                      <div class="col-4">
+                        <input class="form-control" type="text" id="infoactualcalories" name="infoactualcalories"/>
+                      </div>
+                      <div class="col-2 text-start">
+                        kcal
+                      </div>
+                    </div>
+
+                    <!-- HR -->
+                    <div class="row text-center d-flex align-items-center mb-2">
+                      <div class="col-2"></div>
+                      <div class="col"><strong>Min</strong></div>
+                      <div class="col"><strong>Avg</strong></div>
+                      <div class="col"><strong>Max</strong></div>
+                      <div class="col-2"></div>
+                    </div>
+
+                    <!-- HeartRate -->
+                    <div class="d-flex text-center row align-items-center mb-2">
+                      <div class="col-2 text-end ">
+                        Heart Rate
+                      </div>
+                      <div class="col">
+                        <input class="form-control" type="text" id="infominhr" name="minhr"/>
+                      </div>
+                      <div class="col">
+                        <input class="form-control" type="text" id="infoavghr" name="avghr"/>
+                      </div>
+                      <div class="col">
+                        <input class="form-control" type="text" id="infomaxhr" name="maxhr"/>
+                      </div>
+                      <div class="col-2 text-start">
+                        bpm
+                      </div>
+                    </div>
+                          
+                    <!-- Pace -->
+                    <div class="d-flex row align-items-center">
+                      <div class="col-2 text-end ">
+                        Pace
+                      </div>
+                      <div class="col">
+                        <input class="form-control" type="text" id="infominpace" name="minpace"/>
+                      </div>
+                      <div class="col">
+                        <input class="form-control" type="text" id="infoavgpace" name="avgpace" readonly/>
+                      </div>
+                      <div class="col">
+                        <input class="form-control" type="text" id="infomaxpace" name="maxpace"/>
+                      </div>
+                      <div class="col-2 text-start">
+                        sec / 100m
+                      </div>
+                    </div>
+
+                    <div class="row p-2 mb-2">
+                      <label for="infodescription">Description</label>
+                      <textarea class="form-control" type="textarea" id="infodescription" name="infodescription"></textarea>
+                    </div>
+                    
+                    <label for="infosmileyrange">How did you feel?</label>
+                    <div class="row mb-2" id="infosmileyrange">
+
+                      <div class="col smileys">
+                        <label>           
+                          <input type="radio" class="smiley form-control" name="infofeeling" value ="5"><i class="far fa-grin-hearts smiley" style="font-size:2rem"></i></button>
+                        </label>
+                      </div>
+                      
+                      <div class="col smileys">
+                        <label>           
+                          <input type="radio" class="smiley form-control" name="infofeeling" value ="4"><i class="far fa-grin smiley" style="font-size:2rem"></i></button>
+                        </label>
+                      </div>
+                      
+                      <div class="col smileys">
+                        <label>           
+                          <input type="radio" class="smiley form-control" name="infofeeling" value ="3"><i class="far fa-meh smiley" style="font-size:2rem"></i></button>
+                        </label>
+                      </div>
+                      
+                      <div class="col smileys">
+                        <label>           
+                          <input type="radio" class="smiley form-control" name="infofeeling" value ="2"><i class="far fa-sad-tear smiley" style="font-size:2rem"></i></button>
+                          </label>
+                      </div>
+                      
+                      <div class="col smileys">
+                        <label>           
+                          <input type="radio" class="smiley form-control" name="infofeeling" value ="1"><i class="far fa-sad-cry smiley" style="font-size:2rem"></i></button>
+                        </label>
+                      </div>
+                      
+                    </div>
+
+                    <div class="row form-group p-2">
+                      <label for="infoperceivedexertion" class="form-label">Perceived Exertion</label>
+                      <input type="range" class="form-range" min="1" max="10" id="infoperceivedexertion" name="infoperceivedexertion">
+                    </div>
+
+                    <div class="row p-2 text-center mb-2" id="inforangevalue" style="height:2rem">
+                    </div>
+
+                  </div>
+
+                  <div class="d-flex col-6 flex-column">
+                    
+                    <div class="row form-group p-2">
+                      <label for="comments" class="form-label">Post Activity Comments</label>
+                      <hr>
+                      <div class="col" id="infoconversations"></div>
+                    </div>
+                  </div>
+
+              </div>
+            </div>
+          </div>
+        </div>
+      </form> 
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+      <button type="submit" form="infotrainingform" class="btn btn-primary" value="submit">Save changes</button>
+    </div>
+  </div>
+</div>
+</div>
+
+
+
+<script defer>
+      const sortable = new Sortable.default(document.querySelectorAll("ol"), {
+        draggable: "li",
+        dragging: true,
+      });
+      
+      sortable.on("sortable:start", () => console.log(sortable));
+      sortable.on("sortable:sort", () => console.log("sortable:sort"));
+      sortable.on("sortable:sorted", () => console.log("sortable:sorted"));
+      sortable.on("sortable:stop", () => console.log("sortable:stop"));
+
+      // console.log(sortable)
+    </script>
+
+
+<script defer>
+const ctx = document.getElementById('newChart');
+
+  const validateTime = (elem) => {
+    console.log('Commencing time validation...')
+    const durationarray = elem.split(':')
+      if(durationarray.length===1){
+        return (durationarray[0].length == 1 ? '0' + durationarray[0] 
+        : (durationarray[0] || '00')) + ':00:00';
+      } else if (durationarray.length == 2){
+        return (durationarray[0].length == 1 ? '0' + durationarray[0] 
+        : (durationarray[0] || '00')) + ':' +
+        (durationarray[1].length == 1 ? '0' + durationarray[1] 
+        : (durationarray[1] || '00')) +':00';
+      } else {
+        return (durationarray[0].length == 1 ? '0' + durationarray[0] 
+        : (durationarray[0] || '00')) + ':' + 
+        (durationarray[1].length == 1 ? '0' + durationarray[1] 
+        : (durationarray[1] || '00')) + ':' +
+        (durationarray[2].length == 1 ? '0' + durationarray[2] 
+        : (durationarray[2] || '00'));
+      }
+  }
+
+const toTimeString = (timeinsec) => {
+  const hour = Math.floor(timeinsec / 60 / 60);
+  const minute = Math.abs(hour * 60 - Math.floor(timeinsec / 60))
+  const second = Math.abs(minute * 60 - timeinsec)
+
+  return validateTime(`${hour}:${minute}:${second}`);
+}
+
+let chartdata = [{x:0,y:0}];
+
+const config = {
+  responsive: true,
+  plugins:{
+    legend:{
+      display: true,
+
+    },
+    title:{
+      display: true,
+
+    },
+    tooltip: {
+      callbacks: {
+        title: function(context) {
+          const timeString = new Date(context[0].parsed.x).toLocaleTimeString(navigator.language, {
+            hour: '2-digit',
+            minute:'2-digit'
+          })
+
+          return timeString
+        }
+      }
+    },
+    dragData: {        
+          round: 0,
+          dragX: false,
+          showTooltip: true,
+          onDragStart:function (e, datasetIndex, index, value) {
+          },
+          onDrag: function (e, datasetIndex, index, value) {
+              e.target.style.cursor = 'grabbing'
+              //console.log("Drag Value: ", value.x)
+          },
+          onDragEnd: function (e, datasetIndex, index, value) {
+              e.target.style.cursor = 'default'
+          },
+      },
+    },
+    scales: {
+        x:{
+          type: 'linear',
+          min: 0,
+          max: 'auto',
+          ticks: {
+            callback(v) {
+              return toTimeString(v);
+              // return v;
+            }
+          }
+        },
+        y:{
+          title: {
+            display: true,
+            text: '% of max HR',
+          },
+           beginAtZero: true,
+                steps: 1,
+                stepValue: 1,
+                max: 100
+          },
+      }
+    }
+
+
+let draggablechart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [
+        {
+          label: 'Training Duration Splits by % of Max HR',
+          data: chartdata,
+          fill:true,
+          stepped:true}
+      ]
+    },
+    options: config
+});
+
+</script>
+</body>
+</html>

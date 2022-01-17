@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@shopify/draggable@1.0.0-beta.11/lib/draggable.bundle.js"></script> -->
+    <script src="https://cdn.jsdelivr.net/npm/@shopify/draggable@1.0.0-beta.11/lib/sortable.js"></script>
+
+    <style>
+      .draggable--over:hover::before{
+        content: 'Insert here';
+        text-align: center;
+        box-sizing: border-box;
+        background: yellow;
+        width: 100%;
+        height: 100%;
+      }
+
+    </style>
+  </head>
+  <body>
+    <ol>
+      <li>
+        <div>Lorem ipsum dolor sit amet consectetur adipisicing elit. Iure fugit illo
+        sequi esse debitis optio, consequatur enim praesentium ab voluptatem.</div>
+        
+      </li>
+      <li>
+        <div>        Reprehenderit, numquam est? Accusantium, odit delectus! Hic distinctio
+        soluta consequuntur esse, voluptate nisi. Eius officia in maxime dolore
+        sint a?</div>
+
+      </li>
+      <li>
+        <div>Officiis, quaerat, dolorem sit quo ipsam et totam accusamus est,
+        excepturi quas maiores. Eligendi similique iure provident ratione quidem
+        necessitatibus.</div>
+        
+      </li>
+      <li>
+        <div>Iure adipisci repudiandae possimus cupiditate dicta dolorem quia
+        voluptatum error voluptas, explicabo laboriosam officia illo eius qui
+        nihil dignissimos libero!</div>
+        
+      </li>
+      <li>
+        <div>        Recusandae at deleniti quos sequi rerum ab, consequuntur iusto assumenda
+        itaque quidem, alias numquam commodi dignissimos tempore ullam, quo
+        enim?</div>
+
+      </li>
+      <li>
+        <div>Voluptas laboriosam vitae veritatis quaerat incidunt! Deserunt
+        reprehenderit consequatur voluptatibus at, aliquid id? Illum eius rem
+        cum nesciunt recusandae doloremque.</div>
+        
+      </li>
+    </ul>
+
+    <script defer>
+      const sortable = new Sortable.default(document.querySelectorAll("ol"), {
+        draggable: "li",
+        dragging: true,
+      });
+      
+      sortable.on("sortable:start", () => console.log(sortable));
+      // sortable.on("sortable:sort", () => console.log("sortable:sort"));
+      // sortable.on("sortable:sorted", () => console.log("sortable:sorted"));
+      // sortable.on("sortable:stop", () => console.log("sortable:stop"));
+
+      // console.log(sortable)
+    </script>
+  </body>
+</html>

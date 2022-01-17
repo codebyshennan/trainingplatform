@@ -1,0 +1,760 @@
+<link
+  href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/css/bootstrap.min.css"
+  rel="stylesheet"
+  integrity="sha384-KyZXEAg3QhqLMpG8r+8fhAXLRk2vvoC2f3B09zVXn8CA5QIVfZOJ3BCsw2P0p/We"
+  crossorigin="anonymous"
+/>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js" integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+<script
+  src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.0/dist/js/bootstrap.bundle.min.js"
+  integrity="sha384-U1DAWAznBHeqEIlVSCgzq+c9gqGAJn5c/t99JyeKa9xxaYpSvHU5awsuZVVFIhvj"
+  crossorigin="anonymous"
+></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.0.1/chart.min.js"></script>
+    <script src="static/chartjs-dragdata.js"></script>
+<!-- 
+<script src="https://unpkg.com/packery@2/dist/packery.pkgd.js"></script>
+<script src="https://unpkg.com/draggabilly@2/dist/draggabilly.pkgd.js"></script>
+ -->
+
+ <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" integrity="sha384-DyZ88mC6Up2uqS4h/KRgHuoeGwBcD4Ng9SiP4dIRy0EXTlnuz47vAwmeGwVChigm" crossorigin="anonymous">
+<!-- Entire bundle -->
+<!-- <script src="https://cdn.jsdelivr.net/npm/@shopify/draggable@1.0.0-beta.11/lib/draggable.bundle.js"></script> -->
+<!-- 
+
+<script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script> -->
+
+<style>
+  /* .row > * {
+    border: 0.1px solid black;
+  } */
+
+  .smiley {
+    background-color: transparent;
+    border: none;
+    color: rgba(0,0,0,0.2);
+  }
+
+  .smiley:hover {
+    color: black;
+  }
+
+  input[type=text], input[type=textarea], select{
+    background-color: transparent;
+  }
+  input[type=radio] { 
+    position: absolute;
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  input[type=radio]:checked + i {
+    color:black;
+  }
+
+  input[type="file"] {
+    display: none;
+  }
+
+  .uploadbutton {
+      border: 1px solid #ccc;
+      display: inline-block;
+      padding: 6px 12px;
+      cursor: pointer;
+  }
+
+  #workoutcard {
+    background-color: rgba(0,0,0,0.2);
+  }
+
+</style>
+<script defer>
+
+document.addEventListener('DOMContentLoaded', ()=>{
+    
+  const startdate = document.querySelector('#startdate');
+  const datecontainer = document.getElementById('datecontainer');
+  const activitytype = document.getElementById('activitytype');
+  const activitylist = document.getElementById('activitylist');
+  const rangevalue = document.getElementById('rangevalue');
+  const perceivedexertion = document.getElementById('perceivedexertion');
+  const feelingvalue = document.getElementById('feelingvalue');
+  const smileys = document.querySelectorAll('input.smiley')
+  const plannedavgpace = document.getElementById('plannedavgpace');
+  const timetaken = document.getElementById('timetaken');
+  const plannedtime = document.getElementById('plannedtime');
+  const actualavgpace = document.getElementById('actualavgpace');
+  const distancevalue = document.getElementById('distancevalue');
+  const planneddistance = document.getElementById('planneddistance');
+  const workoutcard = document.getElementById('workoutcard');
+  const formentry = document.getElementById('formentry');
+  const meridiem = ['am','pm']
+  const interval = ['00','15','30','45'];
+  const timelist = document.getElementById('timelist');
+  const actualtimetaken = document.getElementById('actualtimetaken');
+  const avgpace = document.getElementById('avgpace');
+
+  startdate.addEventListener('focus', (e) => {
+    e.target.type='date';
+    if(e.target.value) {
+      e.target.value = e.target.datavalue;
+    }
+  }, true)
+
+  startdate.addEventListener('blur', (e) => {
+      e.target.type = 'text';
+  }, true)
+
+  startdate.addEventListener('change', (e)=> {
+      let temp = e.target.value;
+      e.target.placeholder = (new Date(e.target.value)).toString().substr(0,15);
+      e.target.datavalue = temp;
+      datecontainer.value = temp;
+      e.target.value = "";
+      e.target.type='text';
+  }, true)
+
+  for(let j=0;j<2;j++){
+    for(let i = 0; i<12; i++){
+      for(int in interval) {
+        
+        timelist.add(new Option
+        ((i==0?12:i).toString() + ':'+ interval[int] + ' '+ meridiem[j], 
+        i.toString() + ':' + interval[int]))
+      }
+    }
+  }
+
+  activitylist.addEventListener('change', (e)=>{
+    const value = e.target.value;
+    switch (value) {
+      case "swimming":
+        activitytype.innerHTML = `<i class="fas fa-swimmer" style="font-size: 3rem"></i>`
+        break;
+
+      case "running":
+        activitytype.innerHTML = `<i class="fas fa-running" style="font-size: 3rem"></i>`
+        break;
+
+      case "cycling":
+        activitytype.innerHTML = `<i class="fas fa-biking" style="font-size: 3rem"></i>`
+        break;
+
+      case "gym":
+        activitytype.innerHTML = `<i class="fas fa-dumbbell" style="font-size: 3rem"></i>`
+        break;
+
+      default:
+        break;
+    }
+  })
+
+  perceivedexertion.addEventListener('change', (e)=>{
+    switch (e.target.value) {
+      case '1':
+      case '2':
+      case '3':
+        rangevalue.innerText = `Your RPE is ${e.target.value}. You feel that the training intensity is easy.`;
+        break;
+      
+      case '4':
+      case '5':
+      case '6':
+        rangevalue.innerText = `Your RPE is ${e.target.value}. You feel that the training intensity is moderate.`;
+        break;
+
+      case '7':
+      case '8':
+      case '9':
+        rangevalue.innerText = `Your RPE is ${e.target.value}. You feel that the training intensity is high.`;
+        break;
+
+      case '10':
+        rangevalue.innerText = `Your RPE is ${e.target.value}. You feel like dying.`;
+        break;
+    
+      default:
+        rangevalue.innerText = `Select a range value.`;
+        break;
+    }
+    
+  })
+
+  smileys.forEach((x)=>
+    x.addEventListener('click',(ev)=> {
+      feelingvalue.innerHTML = ev.target.nextElementSibling.outerHTML;
+    }
+    ))
+
+  plannedtime.addEventListener('change', (ev)=>{
+      const durationarray = ev.target.value.split(':')
+      if(durationarray.length===1){
+        ev.target.value = (durationarray[0].length == 1 ? '0' + durationarray[0] : (durationarray[0] || '00')) + ':00:00';
+        timetaken.innerText = ev.target.value;
+      } else if (durationarray.length == 2){
+        ev.target.value = (durationarray[0].length == 1 ? '0' + durationarray[0] : (durationarray[0] || '00')) + ':' +
+        (durationarray[1].length == 1 ? '0' + durationarray[1] : (durationarray[1] || '00')) +':00';
+        timetaken.innerText = ev.target.value;
+      } else {
+        ev.target.value = (durationarray[0].length == 1 ? '0' + durationarray[0] : (durationarray[0] || '00')) + ':' + (durationarray[1].length == 1 ? '0' + durationarray[1] : (durationarray[1] || '00')) + ':' +(durationarray[2].length == 1 ? '0' + durationarray[2] : (durationarray[2] || '00'));
+        timetaken.innerText = ev.target.value;
+      }
+    })
+
+  actualtimetaken.addEventListener('change', (ev)=>{
+      const durationarray = ev.target.value.split(':')
+      if(durationarray.length===1){
+        ev.target.value = (durationarray[0].length == 1 ? '0' + durationarray[0] : (durationarray[0] || '00')) + ':00:00';
+        timetaken.innerText = ev.target.value;
+      } else if (durationarray.length == 2){
+        ev.target.value = (durationarray[0].length == 1 ? '0' + durationarray[0] : (durationarray[0] || '00')) + ':' +
+        (durationarray[1].length == 1 ? '0' + durationarray[1] : (durationarray[1] || '00')) +':00';
+        timetaken.innerText = ev.target.value;
+      } else {
+        ev.target.value = (durationarray[0].length == 1 ? '0' + durationarray[0] : (durationarray[0] || '00')) + ':' + (durationarray[1].length == 1 ? '0' + durationarray[1] : (durationarray[1] || '00')) + ':' +(durationarray[2].length == 1 ? '0' + durationarray[2] : (durationarray[2] || '00'));
+        timetaken.innerText = ev.target.value;
+      }
+    })
+  
+  planneddistance.addEventListener('change', (ev)=>{
+      const num = Number(ev.target.value);
+      ev.target.value = num.toFixed(2)
+      distancevalue.innerText = ev.target.value;
+      } );
+
+  actualdistance.addEventListener('change', (ev)=>{
+      const num = Number(ev.target.value);
+      ev.target.value = num.toFixed(2)
+      distancevalue.innerText = ev.target.value;
+      } );
+
+  formentry.addEventListener('change',(ev)=>{
+
+    const plantimearray = plannedtime.value.split(':')
+    const actualtimearray = actualtimetaken.value.split(':')
+    const gettime = (array) => {
+      const hours = +array[0] * 60 * 60;
+      const minutes = +array[1] * 60;
+      const seconds = +array[2];
+      return hours+minutes+seconds;
+    }
+    
+    const plantimevalue = gettime(plantimearray)
+    const actualtimevalue = gettime(actualtimearray)
+
+    if(planneddistance.value && plantimevalue) {
+      const plannedpacevalue = (+planneddistance.value * 60 * 60 / plantimevalue).toFixed(2)
+      plannedavgpace.value = isNaN(plannedpacevalue) ? 0: plannedpacevalue;
+    }
+
+    if(actualdistance.value && actualtimevalue) {
+      const actualpacevalue = (+actualdistance.value * 60 * 60 / actualtimevalue).toFixed(2)
+      actualavgpace.value = isNaN(actualpacevalue) ? 0 : actualpacevalue;
+      avgpace.value = isNaN(actualpacevalue) ? 0 : actualpacevalue;
+    }
+
+    if(plannedavgpace.value && actualavgpace.value){
+       const comparepace = Math.abs(Number(plannedavgpace.value) - Number(actualavgpace.value)) / Number(plannedavgpace.value);
+
+       console.log(comparepace)
+
+      switch (true) {
+        case comparepace <= 0.2:
+          workoutcard.style.backgroundColor = 'rgb(127,192,98)';
+          break;
+        case comparepace <= 0.5:
+          workoutcard.style.backgroundColor = 'rgb(253,202,46)';
+          break;
+        case comparepace <= 0.9:
+          workoutcard.style.backgroundColor = 'rgb(253,148,44)';
+          break;
+        
+        case comparepace == 1:
+          workoutcard.style.backgroundColor = 'rgb(211,10,38)';
+          break;
+      
+        default:
+          workoutcard.style.backgroundColor = 'rgb(210,210,210)';
+          break;
+      }
+    }
+  })
+})
+
+  
+
+</script>
+
+<!-- main div -->
+<div class="container-fluid">
+  <form action="/test" method="POST" enctype="multipart/form-data">
+    <div class="row justify-content-start" id="startparams" style="padding:10px 10px 10px 10px;">
+      <div class="col-2">
+        <input type="text" id="startdate"
+        placeholder = "Fri 5 Sep 2021"
+        datavalue=""
+        value=""
+        style="border: none; "
+          >
+        <input type="text" id="datecontainer" name="startdate"
+        value=""
+        style="display:none "
+          >  
+      </div>
+      <div class="col-2">
+        <select name="time" style="border: none;" id="timelist" onblur="(this.type='text')">
+          <option hidden>Enter Time</option>
+        </select>
+      </div>
+    </div>
+    <!-- overview -->
+    <div class="row" id = "builderoptions">
+      <div class="col" >
+        <div class="row" id = "workoutdetails">
+          <div class="col-10 p-3" id="workoutcard"> 
+            <input type="text" name="title" value="Untitled Workout" style="border: none; width: 100%; margin-left:10px">
+            <div class="row justify-content-center align-items-center" style="height: 100px">
+              <div class="col-2 " id="activitytype">
+                -
+              </div>
+              <div class="col-1">
+                <select name="activitytype" style="border: none;width:20px" id="activitylist">
+                    <option hidden></option>
+                    <option value="running"> Running </option>
+                    <option value="swimming"> Swimming </option>
+                    <option value="cycling"> Cycling </option>
+                    <option value="gym"> Gym </option>
+                  </select>
+              </div>
+              <div class="col-3" style="font-size: 2rem;">
+                <span id="timetaken">--:--:--</span>
+              </div>
+              <div class="col-3" style="font-size: 2rem;">
+                <span id="distancevalue">--</span> <span id="distanceunit"> km</span>
+              </div>
+              <div class="col-1" style="font-size: 2rem;" id="feelingvalue">
+              </div>
+
+
+            </div>
+
+
+          </div>
+          <div class="col-2">
+            <div class="row">
+              <p></p>
+            </div>
+            <div class="row text-center" >
+              
+              <p style="font-size: 0.8rem;">These formats are accepted:</p>
+              <p style="font-size: 1rem">.tcx | .gpx | .fit</p>
+            </div>
+            
+            
+            <div class="row" style="padding:0 10px 0 10px;">
+              <label for="trainingfile" class="uploadbutton">
+                <i class="fas fa-file-upload"></i> Upload
+              </label>
+              <input type="file" name="trainingfile" id="trainingfile">
+            </div>
+            
+            
+
+          </div>
+        </div>
+      </div>
+      <div class="col">
+        <div class="row">
+          <div class="col-8 " style="padding:10px 10px 10px 10px;">
+            <p></p>
+            <div class="d-flex row text-center align-content-center">
+              <p>Click on blocks to build workout</p></div>
+            <div class="row justify-content-center text-center align-middle" style="font-size:1rem">
+              <div class="col" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;">
+                <span class"align-middle"><i class="fas fa-chart-area"></i> Warm-up</span>    
+              </div>
+              <div class="col" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;">
+                <span class"align-middle"><i class="fas fa-chart-area"></i> Active</span>    
+              </div>
+              <div class="col" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;">
+                <span class"align-middle"><i class="fas fa-chart-area"></i> Recovery</span>    
+              </div>
+              <div class="col" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;">
+                <span class"align-middle"><i class="fas fa-chart-area"></i> Cool-down</span>    
+              </div>
+            </div>
+            <div class="row justify-content-center text-center align-middle" style="font-size:1rem">
+              <div class="col" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;">
+                <span class"align-middle"><i class="fas fa-chart-area"></i> Two-Step Repeats</span>    
+              </div>
+              <div class="col" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;">
+                <span class"align-middle"><i class="fas fa-chart-area"></i> Three-Step Repeats</span>    
+              </div>
+              <div class="col" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;">
+                <span class"align-middle"><i class="fas fa-chart-area"></i> Ramp Up</span>    
+              </div>
+              <div class="col" style="padding:0 0 0 0;border:1px solid grey;margin:0 auto;">
+                <span class"align-middle"><i class="fas fa-chart-area"></i> Ramp Down</span>    
+              </div>
+            </div>
+          </div>
+          <div class="col-4">Units</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- packery -->
+    <div class="row" style="position: relative; width:100%; margin-left: 10px;">
+        <canvas id="myChart" width="500" height="100"></canvas>
+    </div>
+
+    <p><button class="append-button">Append items</button></p>
+
+
+    <!-- main -->
+    <div class="container-fluid">
+      <div class="row">
+      <!-- planned/completed -->
+        <div class="col-6">
+          <div class="row">
+
+            <!-- split between form entry and workout editor -->
+              <div class="col-6" id="formentry">
+
+                <!-- start of form entry -->
+                <div class="row text-center d-flex align-items-center p-2">
+                  <div class="col-2"></div>
+                  <div class="col-4"><strong>Planned</strong></div>
+                  <div class="col-4"><strong>Completed</strong></div>
+                  <div class="col-2"></div>
+                  
+                </div>
+                <!-- Duration -->
+                <div class="d-flex row align-items-center mb-3">
+                  <div class="col-2 text-end ">
+                    Duration
+                  </div>
+                  <div class="col-4">
+                    <input class="form-control" type="text" id="plannedtime" name="plannedtime"/>
+                  </div>
+                  <div class="col-4">
+                    <input class="form-control" type="text" id="actualtimetaken" name="actualtimetaken"/>
+                  </div>
+                  <div class="col-2 text-start">
+                    h:m:s
+                  </div>
+                </div>
+
+                <!-- Distance -->
+                <div class="d-flex row align-items-center mb-3">
+                  <div class="col-2 text-end ">
+                    Distance
+                  </div>
+                  <div class="col-4">
+                    <input class="form-control" type="text" id="planneddistance" name="planneddistance"/>
+                  </div>
+                  <div class="col-4">
+                    <input class="form-control" type="text" id="actualdistance" name="actualdistance"/>
+                  </div>
+                  <div class="col-2 text-start">
+                    km
+                  </div>
+                </div>
+
+                <!-- Average Pace -->
+                <div class="d-flex row align-items-center mb-3">
+                  <div class="col-2 text-end ">
+                    Average Pace
+                  </div>
+                  <div class="col-4">
+                    <input class="form-control" type="text" id="plannedavgpace" name="plannedavgpace" readonly/>
+                  </div>
+                  <div class="col-4">
+                    <input class="form-control" type="text" id="actualavgpace" name="actualavgpace" readonly/>
+                  </div>
+                  <div class="col-2 text-start">
+                    km/h
+                  </div>
+                </div>
+
+                <!-- Calories -->
+                <div class="d-flex row align-items-center mb-3">
+                  <div class="col-2 text-end ">
+                    Calories
+                  </div>
+                  <div class="col-4">
+                    <input class="form-control" type="text" id="plannedcalories" name="plannedcalories"/>
+                  </div>
+                  <div class="col-4">
+                    <input class="form-control" type="text" id="actualcalories" name="actualcalories"/>
+                  </div>
+                  <div class="col-2 text-start">
+                    kcal
+                  </div>
+                </div>
+
+                <!-- HR -->
+                <div class="row text-center d-flex align-items-center mb-3">
+                  <div class="col-2"></div>
+                  <div class="col"><strong>Min</strong></div>
+                  <div class="col"><strong>Avg</strong></div>
+                  <div class="col"><strong>Max</strong></div>
+                  <div class="col-2"></div>
+                </div>
+
+                <!-- HeartRate -->
+                <div class="d-flex text-center  row align-items-center mb-3">
+                  <div class="col-2 text-end ">
+                    Heart Rate
+                  </div>
+                  <div class="col">
+                    <input class="form-control" type="text" id="minhr" name="minhr"/>
+                  </div>
+                  <div class="col">
+                    <input class="form-control" type="text" id="avghr" name="avghr"/>
+                  </div>
+                  <div class="col">
+                    <input class="form-control" type="text" id="maxhr" name="maxhr"/>
+                  </div>
+                  <div class="col-2 text-start">
+                    bpm
+                  </div>
+                </div>
+                      
+                <!-- Pace -->
+                <div class="d-flex row align-items-center">
+                  <div class="col-2 text-end ">
+                    Pace
+                  </div>
+                  <div class="col">
+                    <input class="form-control" type="text" id="minpace" name="minpace"/>
+                  </div>
+                  <div class="col">
+                    <input class="form-control" type="text" id="avgpace" name="avgpace" readonly/>
+                  </div>
+                  <div class="col">
+                    <input class="form-control" type="text" id="maxpace" name="maxpace"/>
+                  </div>
+                  <div class="col-2 text-start">
+                    sec / 100m
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-flex col-6 flex-column">
+                <div class="row p-2 mb-3">
+                  <label for="description">Description</label>
+                  <textarea class="form-control" type="textarea" id="description" name="description"></textarea>
+                </div>
+                
+                <label for="smileyrange">How do you feel?</label>
+                <div class="row mb-3" id="smileyrange">
+
+                  <div class="col smileys">
+                    <label>           
+                      <input type="radio" class="smiley form-control" name="feeling" value ="5"><i class="far fa-grin-hearts smiley" style="font-size:2rem"></i></button>
+                    </label>
+                  </div>
+                  
+                  <div class="col smileys">
+                    <label>           
+                      <input type="radio" class="smiley form-control" name="feeling" value ="4"><i class="far fa-grin smiley" style="font-size:2rem"></i></button>
+                    </label>
+                  </div>
+                  
+                  <div class="col smileys">
+                    <label>           
+                      <input type="radio" class="smiley form-control" name="feeling" value ="3"><i class="far fa-meh smiley" style="font-size:2rem"></i></button>
+                    </label>
+                  </div>
+                  
+                  <div class="col smileys">
+                    <label>           
+                      <input type="radio" class="smiley form-control" name="feeling" value ="2"><i class="far fa-sad-tear smiley" style="font-size:2rem"></i></button>
+                      </label>
+                  </div>
+                  
+                  <div class="col smileys">
+                    <label>           
+                      <input type="radio" class="smiley form-control" name="feeling" value ="1"><i class="far fa-sad-cry smiley" style="font-size:2rem"></i></button>
+                    </label>
+                  </div>
+                  
+                </div>
+
+                <div class="row form-group p-2">
+                  <label for="perceivedexertion" class="form-label">Perceived Exertion</label>
+                  <input type="range" class="form-range" min="1" max="10" id="perceivedexertion" name="perceivedexertion">
+                </div>
+
+                <div class="row p-2 text-center mb-3" id="rangevalue" style="height:2rem">
+                </div>
+
+                <div class="row form-group p-2">
+                  <label for="comments" class="form-label">Post Activity Comments</label>
+                  <textarea class="form-control" name="comments" id="comments" rows="10"></textarea>
+                </div>
+              </div>
+
+          </div>
+        </div>
+        <div class="col-6">workout details editor</div>
+      </div>
+    </div>
+    <input type="submit" value="submit">
+  </form> 
+</div>
+
+<!-- ChartJS -->
+<script>
+  // to insert data
+  // inject into myLineChart.data <- array
+
+
+  Chart.LineElement.prototype.draw(()=>{
+      Chart.LineElement.prototype.draw().apply(this, arguments);
+
+      this.chart.textAlign = "center"
+      // y value and x index
+      this.chart.fillText("ZONE1", this.scale.calculateX(3.5), this.scale.calculateY(20.75))
+      this.chart.fillText("ZONE2", this.scale.calculateX(11.5), this.scale.calculateY(13))
+      this.chart.fillText("ZONE3", this.scale.calculateX(2), this.scale.calculateY(9.75))
+      this.chart.fillText("ZONE4", this.scale.calculateX(14.5), this.scale.calculateY(22.75))
+    });
+
+const ctx = document.getElementById('myChart');;
+
+// starts with no data
+const data = [
+  {
+    x: 1617253200000,
+    y: 10
+  },
+  {
+    x: 1617256800000,
+    y: 50
+  },
+  {
+    x: 1617260400000,
+    y: 30
+  },
+    {
+    x: 1617260800000,
+    y: 30
+  }
+];
+
+const config = {
+  responsive: true,
+  plugins:{
+    legend:{
+      display: false
+    },
+    title:{
+      display: false
+    },
+    tooltip: {
+      callbacks: {
+        title: function(context) {
+          const timeString = new Date(context[0].parsed.x).toLocaleTimeString(navigator.language, {
+            hour: '2-digit',
+            minute:'2-digit'
+          })
+
+          return timeString
+        }
+      }
+    },
+    dragData: {        
+          round: 0,
+          dragX: false,
+          showTooltip: true,
+          onDragStart:function (e, datasetIndex, index, value) {
+          },
+          onDrag: function (e, datasetIndex, index, value) {
+              e.target.style.cursor = 'grabbing'
+              //console.log("Drag Value: ", value.x)
+          },
+          onDragEnd: function (e, datasetIndex, index, value) {
+              e.target.style.cursor = 'default'
+          },
+      },
+    },
+    scales: {
+        x:{
+          type: 'linear',
+          min: 1617253200000,
+          max: 1617300800000,
+          ticks: {
+            callback(v) {
+              return new Date(v).toLocaleTimeString(navigator.language, {
+                hour: '2-digit',
+                minute:'2-digit'
+              })
+            }
+          }
+        },
+        y:{
+           beginAtZero: true,
+                steps: 1,
+                stepValue: 1,
+                max: 100
+          },
+      }
+};
+
+
+let myLineChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      datasets: [
+        {
+          data:data,
+          fill:true,
+          stepped:true}
+      ]
+    },
+    options: config
+});
+
+
+const button = document.querySelector('.append-button')
+button.addEventListener('click', (e)=> {
+
+  console.log('hi >> ')
+  let util = myLineChart.data.datasets[0].data;
+  const addValue = (xvalue, yvalue) => {
+    const value = {x: xvalue, y: yvalue};
+    util.push(value)
+      // TODO: change the scaling due to input
+  // myLineChart.options.scales.x.min
+  }
+
+  const removeValue = (xvalue, yvalue) => {
+    
+    const indexOfvalue = util.findIndex(element => element.x == xvalue && element.y == yvalue);
+    util.splice(indexOfvalue,1);
+
+    // TODO: change scaling due to removal
+  }
+
+  const getCurrentX = () => {
+    return util[util.length-1].x;
+  }
+
+  console.log(getCurrentX());
+
+  addValue(1617262000000, 100);
+  addValue(1617264000000, 100);
+
+  //mandatory to update chart after addition or removal
+  myLineChart.update();
+
+  // TODO: make min and max the min and max values of the data
+
+
+})
+
+</script>
